@@ -1,126 +1,144 @@
 # SolarSync ☀️⚡
-### Smart Solar Asset & Maintenance Management System
+### Autonomous Distributed Solar Maintenance & Task Dispatch Network
 
-SolarSync is a production-grade web platform connecting **Solar Installation Owners**, **Administrators**, and **Maintenance Technicians** to streamline solar asset discovery, health monitoring, fault ticketing, automated job scheduling, and verified repair workflows.
+SolarSync is a modern, dark-minimalist web platform designed for solar energy infrastructure management. Built around a role-based architecture—**Distributors**, **Maintainers**, and **Nearby Residents**—SolarSync eliminates centralized administrator bottlenecks in favor of local community request routing, field technician dispatch, and automated fault resolution.
 
----
-
-## 🌟 Key Features
-
-1. **Interactive Geospatial Map (Leaflet + OpenStreetMap + PostGIS)**:
-   - Live browser geolocation and radius filtering (5 km, 10 km, 25 km, 50 km).
-   - Marker clustering, operational status indicators, and side-by-side asset drawer.
-   - Authorised installation registration by clicking map coordinates.
-   - Nominatim geocoding search by city or locality.
-
-2. **Role-Based Access Control (RBAC)**:
-   - **Administrator**: Global asset management, technician allocation, SLA monitoring, and system metrics.
-   - **Installation Owner**: Asset registration, fault submission with photos, and repair verification.
-   - **Technician**: Mobile-ready job dashboard, status updates, and before/after repair evidence submission.
-
-3. **Smart Maintenance & Automation**:
-   - Asynchronous job queue powered by **Celery** and **Redis**.
-   - Automated preventive maintenance inspection alerts.
-   - Overdue maintenance detection and assignment notifications.
-
-4. **Fault Reporting & Verified Repair**:
-   - Categorised fault ticketing with severity grading and photo uploads.
-   - Proof-of-work verification loop (technician evidence submission → owner/admin sign-off or reopening).
-
-5. **Analytics & Insights**:
-   - MTTR (Mean Time to Repair), fault frequency by equipment, technician workload distribution, and maintenance completion metrics.
-
-6. **DevOps & Observability**:
-   - Containerized multi-service deployment with Docker Compose.
-   - Prometheus metrics endpoint & Grafana monitoring dashboard.
-   - GitHub Actions CI for linting, security scans (Trivy), and automated testing.
+The interface features an **ECHOID-inspired dark minimalist aesthetic** powered by Google Fonts (Sora & JetBrains Mono), sharp 0px geometry, and a **photorealistic 3D Sun simulation** in Three.js with dynamic plasma convection shaders and spherical coronal atmospheres.
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+## 🌟 Key Architecture & Highlights
 
-| Layer | Technology |
+### 1. Zero-Admin Distributed Workflow
+- **📡 Distributor (Task Assigner)**:
+  - Triage problem requests submitted by nearby solar array owners.
+  - Dispatch tasks to specialized field maintainers with SLA priorities and geographic awareness.
+  - Review photographic proof-of-work before formal job sign-off.
+- **🔧 Maintainer (Field Specialist)**:
+  - Receive assigned maintenance orders directly on a mobile-ready console.
+  - Track active job timers, record replaced components, and submit before/after photo evidence.
+  - Quick-resolve single tickets or perform bulk verification.
+- **🏡 Nearby Resident (Solar Array Owner)**:
+  - Register rooftop and commercial solar installations with geographic coordinates.
+  - Submit equipment failure tickets (inverter drops, panel hotspots, wiring degradation) with photographic evidence.
+  - Monitor repair status in real time.
+
+### 2. Photorealistic 3D Dynamic Sun Simulation (Three.js)
+- **Procedural Photosphere Convection Shader**:
+  - Multi-octave Simplex noise simulates boiling, bubbling solar plasma cells.
+  - Physical color gradation: Thermal Core (`#FFF5BF`) → Chromosphere Gold (`#FFA60D`) → Convection Crimson (`#F24705`) → Limb-darkened edges.
+- **Volumetric Spherical Coronal Halos**:
+  - Four concentric atmospheric layers utilizing additive blending (`THREE.AdditiveBlending`).
+  - True spherical stellar geometry without planetary rings or distortion.
+- **Radial Solar Prominences & Outflow**:
+  - Arched coronal plasma loops erupting organically from the solar surface.
+  - 2,000 spherical photon & solar wind particles streaming in 360° space.
+- **Interactive Orbital Telemetry Beacons**:
+  - Interactive nodes for Distributor Hub, Active Maintainers, and Nearby Requests.
+  - Mouse hover displays live telemetry HUD; click-to-dispatch navigates directly to work orders.
+
+### 3. Fault Management & Instant Resolution Suite
+- **Comprehensive Incident Tracking**:
+  - Severity classification (Critical P1, High P2, Medium P3, Low P4).
+  - Photographic evidence capture and storage.
+- **Batch Resolution**:
+  - 1-click `REPAIR ALL FAULTS` endpoint (`POST /api/v1/faults/repair-all`) restores entire solar fleet health to `OPERATIONAL` in seconds.
+  - Individual `Repair & Close` button on every active incident card.
+
+### 4. Minimalist Dark Identity & Auth Portal
+- Pure `#000000` background with Sora 200/300 display typography and JetBrains Mono terminal metrics.
+- Seamless dual-mode authentication: `01 // SIGN IN` and `02 // REGISTER`.
+- Direct 1-Click instant sign-in presets for Distributor, Maintainer, and Resident personas.
+- Dual storage synchronization: persistent MongoDB user records with SQLite/PostgreSQL fallback.
+
+---
+
+## 🏗️ Technology Stack
+
+| Layer | Technologies |
 |---|---|
-| **Frontend** | React 18, Vite, Lucide Icons, Leaflet / React-Leaflet, Tailwind CSS |
-| **Backend** | Python 3.11+, FastAPI, Pydantic v2, SQLAlchemy 2.0 |
-| **Database** | PostgreSQL 16 with PostGIS spatial extension |
-| **Worker & Queue** | Celery 5.4, Redis 7 |
-| **Authentication** | JWT (JSON Web Tokens), OAuth2 Password Bearer, Bcrypt password hashing |
-| **Testing** | Pytest, HTTPX, Playwright E2E |
-| **DevOps & Monitoring**| Docker, Docker Compose, Prometheus, Grafana, Trivy |
+| **Frontend** | React 18, Vite, Three.js, Lucide Icons, Leaflet / React-Leaflet, Axios |
+| **Styling & Typography** | Google Fonts (Sora, JetBrains Mono), Pure CSS Variables, 0px Sharp Aesthetics |
+| **Backend API** | Python 3.11+, FastAPI, Pydantic v2, SQLAlchemy 2.0, Uvicorn |
+| **Data Layer** | PostgreSQL 16 (PostGIS) / SQLite Fallback, MongoDB credential mirroring |
+| **Asynchronous Engine** | Celery 5.4, Redis 7 |
+| **Observability & Metrics** | Prometheus HTTP metrics, Grafana dashboards |
 
 ---
 
-## 🚀 Quick Start with Docker Compose
+## 🚀 Quick Start Guide
 
-Ensure Docker and Docker Compose are installed on your machine, then run:
+### Prerequisites
+- Python 3.10+
+- Node.js 18+ and npm
+- (Optional) Docker and Docker Compose
 
+### 1. Clone & Setup Repository
 ```bash
-# 1. Clone repository & change directory
-cd SolarSync
-
-# 2. Copy environment configuration
-cp .env.example .env
-
-# 3. Build and launch all services in detached mode
-docker-compose up --build -d
-
-# 4. Verify running containers
-docker-compose ps
+git clone https://github.com/nagarajd11/SOLARSYNC.git
+cd SOLARSYNC
 ```
 
-### Service Access URLs
-- **Web Frontend**: [http://localhost:5173](http://localhost:5173)
-- **FastAPI Backend & Interactive API Docs (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Backend Healthcheck**: [http://localhost:8000/health](http://localhost:8000/health)
-- **Prometheus Dashboard**: [http://localhost:9090](http://localhost:9090)
-- **Grafana Metrics**: [http://localhost:3001](http://localhost:3001) *(default login: admin / admin)*
-
----
-
-## 💻 Local Development Setup
-
-### Backend Setup
+### 2. Backend Setup
 ```bash
 cd backend
+
+# Create and activate virtual environment
 python -m venv venv
-# On Windows:
+# Windows:
 .\venv\Scripts\activate
-# On Linux/macOS:
+# Linux/macOS:
 source venv/bin/activate
 
+# Install dependencies
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
 
-### Frontend Setup
+# Start the FastAPI server
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+API Documentation will be live at: **http://localhost:8000/docs**
+
+### 3. Frontend Setup
 ```bash
-cd frontend
+cd ../frontend
+
+# Install dependencies
 npm install
-npm run dev
+
+# Start the Vite development server
+npm run dev -- --host 0.0.0.0 --port 5173
 ```
+Web application will be accessible at: **http://localhost:5173**
 
 ---
 
-## 🧪 Testing
+## 🌐 Application Route Map
 
-```bash
-# Run backend tests
-cd backend
-pytest -v
-
-# Run with coverage report
-pytest --cov=app tests/
-```
-
----
-
-## 🛡️ Security & Environment Best Practices
-- Never commit `.env` or files containing private credentials.
-- All file uploads are validated for MIME type, extension, and file size limits.
-- Sensitive passwords are encrypted using Bcrypt with a high work factor.
+| Path | Description | Access |
+|---|---|---|
+| `/` | Interactive 3D Sun Landing & Role Selector | Public |
+| `/login` | High-Precision Authentication & Registration Portal | Public |
+| `/dashboard` | Operational Console & Fleet Metrics Ribbon | Authenticated |
+| `/maintenance` | Distributor Dispatch Queue & Work Order Management | Distributor / Maintainer |
+| `/faults` | Incident Reports & Batch "Repair All Faults" Suite | All Roles |
+| `/map` | Geospatial Fleet Discovery & Asset Registration | Authenticated |
+| `/assets` | PV Inverter, String, and Battery Asset Registry | Authenticated |
+| `/analytics` | Mean Time to Repair (MTTR) & Workload Telemetry | Authenticated |
+| `/3d` | Full-Screen 3D Solar Matrix Explorer | Public |
 
 ---
 
-## 📄 License
-SolarSync is distributed under the MIT License.
+## 👤 Default Demo Credentials
+
+For quick evaluation, use the 1-click sign-in buttons on `/login` or enter:
+
+| Persona | Email / Identifier | Password | Role Description |
+|---|---|---|---|
+| **Distributor** | `distributor@solarsync.io` | `SolarDist123!` | Assigns maintenance tasks from nearby requests |
+| **Maintainer** | `tech@solarsync.io` | `SolarTech123!` | Receives assignments, uploads repair proof |
+| **Resident** | `owner@solarsync.io` | `SolarOwner123!` | Nearby solar owner reporting equipment faults |
+
+---
+
+## 📜 License
+MIT License. Created for smart, decentralized clean energy management.
