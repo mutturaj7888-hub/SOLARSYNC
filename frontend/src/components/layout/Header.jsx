@@ -25,7 +25,6 @@ export default function Header({ healthStatus, onRefreshHealth }) {
     { path: '/analytics', label: 'Analytics' },
     { path: '/login', label: 'Auth' },
     { path: '/3d', label: '3D Grid' },
-    { path: '/echoid', label: 'ECHOID' },
   ];
 
   return (

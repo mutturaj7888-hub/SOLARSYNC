@@ -302,7 +302,27 @@ export default function Solar3DCanvas({ activeRole = 'distributor', onRequestCli
       }
     };
 
+    // Mouse click on beacon
+    const handleClick = (e) => {
+      const rect = container.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera({ x, y }, camera);
+      const objects = [distBeacon, ...techMeshes.map(t => t.mesh), ...reqMeshes.map(r => r.mesh)];
+      const intersects = raycaster.intersectObjects(objects, false);
+      if (intersects.length > 0) {
+        const data = intersects[0].object.userData;
+        if (data.type === 'request' && onRequestClick) {
+          onRequestClick(data);
+        } else if (data.type === 'maintainer' && onMaintainerClick) {
+          onMaintainerClick(data);
+        }
+      }
+    };
+
     container.addEventListener('mousemove', handleMouseMove);
+    container.addEventListener('click', handleClick);
 
     // 7. Continuous 3D Motion & Render Loop
     let clock = new THREE.Clock();
@@ -411,6 +431,7 @@ export default function Solar3DCanvas({ activeRole = 'distributor', onRequestCli
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
       container.removeEventListener('mousemove', handleMouseMove);
+      container.removeEventListener('click', handleClick);
       if (renderer.domElement && renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }
@@ -446,7 +467,7 @@ export default function Solar3DCanvas({ activeRole = 'distributor', onRequestCli
             color: hoveredNode.type === 'distributor' ? '#60A5FA' : hoveredNode.type === 'maintainer' ? '#34D399' : '#FBBF24',
             marginBottom: '4px'
           }}>
-            [ ORBITAL NODE: {hoveredNode.type.toUpperCase()} ]
+            ORBITAL NODE • {hoveredNode.type.toUpperCase()}
           </div>
           <div style={{ fontSize: '0.95rem', fontWeight: 600, letterSpacing: '0.02em', marginBottom: '4px' }}>
             {hoveredNode.title}

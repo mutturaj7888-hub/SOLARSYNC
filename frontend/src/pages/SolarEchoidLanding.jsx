@@ -147,9 +147,6 @@ export default function SolarEchoidLanding() {
               <a href="/maintenance" className="solar-hero__nav-link" onClick={(e) => { e.preventDefault(); navigate('/maintenance'); }}>
                 Dispatch
               </a>
-              <a href="/echoid" className="solar-hero__nav-link" onClick={(e) => { e.preventDefault(); navigate('/echoid'); }}>
-                ECHOID
-              </a>
             </nav>
 
             {/* Desktop CTA */}
@@ -206,9 +203,6 @@ export default function SolarEchoidLanding() {
           </a>
           <a href="/maintenance" className="solar-mobile-menu__link" onClick={() => { setMenuOpen(false); navigate('/maintenance'); }}>
             Task Dispatch
-          </a>
-          <a href="/echoid" className="solar-mobile-menu__link" onClick={() => { setMenuOpen(false); navigate('/echoid'); }}>
-            ECHOID Spec
           </a>
           <button
             type="button"

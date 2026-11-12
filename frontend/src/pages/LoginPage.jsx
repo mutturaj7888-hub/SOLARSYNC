@@ -60,7 +60,7 @@ export default function LoginPage() {
     try {
       if (mode === 'login') {
         const user = await login(identifier, password);
-        setSuccessMsg(`Authenticated as ${user.full_name || 'User'} [${(user.role || '').toUpperCase()}]`);
+        setSuccessMsg(`Authenticated as ${user.full_name || 'User'} • ${(user.role || '').toUpperCase()}`);
         setTimeout(() => navigate('/dashboard'), 350);
       } else {
         const user = await register({
