@@ -130,6 +130,16 @@ export const createFault = async (data) => {
   return response.data;
 };
 
+export const updateFaultStatus = async (faultId, status) => {
+  const response = await apiClient.put(`/faults/${faultId}/status`, { status });
+  return response.data;
+};
+
+export const repairAllFaults = async () => {
+  const response = await apiClient.post('/faults/repair-all');
+  return response.data;
+};
+
 export const uploadFaultPhoto = async (file) => {
   const formData = new FormData();
   formData.append('file', file);

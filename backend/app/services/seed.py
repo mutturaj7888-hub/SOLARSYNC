@@ -25,12 +25,21 @@ def seed_database(db: Session):
     logger.info("Seeding initial SolarSync data...")
 
     # 1. Seed Roles & Users
+    distributor = User(
+        email="distributor@solarsync.io",
+        hashed_password=get_password_hash("SolarDist123!"),
+        full_name="Rajesh Sharma",
+        phone_number="+91 98450 11001",
+        role=UserRole.DISTRIBUTOR,
+        is_active=True,
+        is_verified=True
+    )
     admin = User(
         email="admin@solarsync.io",
         hashed_password=get_password_hash("SolarAdmin123!"),
         full_name="Rajesh Sharma",
         phone_number="+91 98450 11001",
-        role=UserRole.ADMIN,
+        role=UserRole.DISTRIBUTOR,
         is_active=True,
         is_verified=True
     )
@@ -61,11 +70,11 @@ def seed_database(db: Session):
         is_active=True,
         is_verified=True
     )
-    db.add_all([admin, owner, tech1, tech2])
+    db.add_all([distributor, admin, owner, tech1, tech2])
     db.commit()
 
     # Mirror seeded users directly into MongoDB
-    for u in [admin, owner, tech1, tech2]:
+    for u in [distributor, admin, owner, tech1, tech2]:
         save_user_to_mongodb({
             "id": u.id,
             "email": u.email,

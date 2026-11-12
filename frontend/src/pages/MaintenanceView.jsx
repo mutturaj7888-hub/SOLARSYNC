@@ -16,6 +16,7 @@ import {
   Layers,
   MapPin,
   AlertTriangle,
+  Sparkles,
   Sun
 } from 'lucide-react';
 import { 
@@ -189,18 +190,18 @@ export default function MaintenanceView({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            {userRole === 'admin' 
-              ? 'Administrator Technician Dispatch & Verification' 
-              : userRole === 'technician' 
+            {(userRole === 'distributor' || userRole === 'admin')
+              ? 'Distributor Task Dispatch & Verification' 
+              : (userRole === 'technician' || userRole === 'maintainer')
               ? 'Maintainer Work Orders & Repair Queue' 
-              : 'Installation Maintenance & Work Tracking'}
+              : 'Nearby Maintenance Requests & Tracking'}
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            {userRole === 'admin'
-              ? 'Only administrators can assign and dispatch certified maintainers to open fault tickets.'
-              : userRole === 'technician'
-              ? 'Active maintenance jobs assigned to you. Update progress and submit before/after photo evidence.'
-              : 'Track the status and technician assignment for your registered solar installations.'}
+            {(userRole === 'distributor' || userRole === 'admin')
+              ? 'Distributors assign tasks to maintainers from problem requests reported by nearby residents.'
+              : (userRole === 'technician' || userRole === 'maintainer')
+              ? 'Active maintenance jobs assigned to you by distributors. Update progress and submit before/after photo evidence.'
+              : 'Track the status and assigned maintainer for your registered solar installations.'}
           </p>
         </div>
 
@@ -219,7 +220,7 @@ export default function MaintenanceView({
             style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
           >
             <AlertTriangle size={14} color="#F59E0B" />
-            Reported Incidents
+            Nearby Requests
           </button>
           <button 
             onClick={() => navigate('/assets')} 
@@ -229,46 +230,38 @@ export default function MaintenanceView({
             <Sun size={14} color="#38BDF8" />
             Asset Registry
           </button>
-          {userRole === 'admin' && (
+          <button 
+            onClick={() => navigate('/3d')} 
+            className="btn-secondary"
+            style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
+          >
+            <Sparkles size={14} color="#60A5FA" />
+            3D Holographic Grid
+          </button>
+          {(userRole === 'distributor' || userRole === 'admin') && (
             <button onClick={() => setShowAssignModal(true)} className="btn-primary">
-              <Plus size={18} />
-              Dispatch Technician
+              <Plus size={16} />
+              Assign Task to Maintainer
             </button>
           )}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
+      {/* ECHOID Terminal Tabs */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
         <button
           onClick={() => setTab('orders')}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            background: tab === 'orders' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-            color: tab === 'orders' ? 'var(--emerald-400)' : 'var(--text-secondary)',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: '0.875rem',
-            cursor: 'pointer'
-          }}
+          className={tab === 'orders' ? 'btn-primary' : 'btn-secondary'}
+          style={{ padding: '0.45rem 1rem', fontSize: '0.75rem' }}
         >
           Active Work Orders ({assignments.length})
         </button>
         <button
           onClick={() => setTab('schedules')}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            background: tab === 'schedules' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-            color: tab === 'schedules' ? 'var(--emerald-400)' : 'var(--text-secondary)',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: '0.875rem',
-            cursor: 'pointer'
-          }}
+          className={tab === 'schedules' ? 'btn-primary' : 'btn-secondary'}
+          style={{ padding: '0.45rem 1rem', fontSize: '0.75rem' }}
         >
-          Preventive Maintenance ({schedules.length})
+          Preventive Schedules ({schedules.length})
         </button>
       </div>
 
@@ -436,8 +429,8 @@ export default function MaintenanceView({
         </div>
       )}
 
-      {/* Modal: Dispatch Technician (Strictly Admin Only) */}
-      {showAssignModal && userRole === 'admin' && (
+      {/* Modal: Dispatch Maintainer (Distributor Only) */}
+      {showAssignModal && (userRole === 'distributor' || userRole === 'admin') && (
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
@@ -458,7 +451,7 @@ export default function MaintenanceView({
             padding: '2rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Dispatch Technician Work Order</h3>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Assign Request to Nearby Maintainer</h3>
               <button onClick={() => setShowAssignModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <X size={20} />
               </button>
@@ -466,7 +459,7 @@ export default function MaintenanceView({
 
             <form onSubmit={handleAssignSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Select Open Fault Ticket</label>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Select Problem Request</label>
                 <select
                   value={selectedFaultId}
                   onChange={(e) => setSelectedFaultId(e.target.value)}
@@ -481,7 +474,7 @@ export default function MaintenanceView({
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Certified Field Technician</label>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Available Field Maintainer</label>
                 <select
                   value={selectedTechId}
                   onChange={(e) => setSelectedTechId(e.target.value)}
@@ -521,7 +514,7 @@ export default function MaintenanceView({
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
-                  Dispatch Work Order
+                  Assign Task to Maintainer
                 </button>
                 <button type="button" onClick={() => setShowAssignModal(false)} className="btn-secondary">
                   Cancel

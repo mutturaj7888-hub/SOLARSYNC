@@ -6,9 +6,11 @@ from app.core.database import Base
 
 
 class UserRole(str, enum.Enum):
+    DISTRIBUTOR = "distributor"
     ADMIN = "admin"
-    INSTALLATION_OWNER = "installation_owner"
+    MAINTAINER = "maintainer"
     TECHNICIAN = "technician"
+    INSTALLATION_OWNER = "installation_owner"
 
 
 class User(Base):

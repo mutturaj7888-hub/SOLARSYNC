@@ -58,20 +58,23 @@ def get_assignments(
     return results
 
 
-@router.post("/assignments", response_model=AssignmentOut, summary="Assign Maintenance Job to Technician")
+@router.post("/assignments", response_model=AssignmentOut, summary="Assign Maintenance Job to Maintainer")
 def assign_technician(
     assign_in: AssignmentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles([UserRole.ADMIN]))
+    current_user: User = Depends(require_roles([UserRole.DISTRIBUTOR, UserRole.ADMIN]))
 ):
-    """Administrator allocates an open fault ticket to a certified field technician."""
+    """Distributor allocates an open fault ticket from nearby requests to a certified field maintainer."""
     fault = db.query(FaultReport).filter(FaultReport.id == assign_in.fault_report_id).first()
     if not fault:
         raise HTTPException(status_code=404, detail="Fault report not found")
 
-    tech = db.query(User).filter(User.id == assign_in.technician_id, User.role == UserRole.TECHNICIAN).first()
+    tech = db.query(User).filter(
+        User.id == assign_in.technician_id,
+        User.role.in_([UserRole.TECHNICIAN, UserRole.MAINTAINER])
+    ).first()
     if not tech:
-        raise HTTPException(status_code=404, detail="Selected technician not found or invalid role")
+        raise HTTPException(status_code=404, detail="Selected maintainer not found or invalid role")
 
     # Check if already assigned
     existing = db.query(MaintenanceAssignment).filter(MaintenanceAssignment.fault_report_id == fault.id).first()

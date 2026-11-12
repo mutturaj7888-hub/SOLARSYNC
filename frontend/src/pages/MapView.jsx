@@ -17,6 +17,7 @@ import {
   X,
   ArrowRight,
   ShieldAlert,
+  Sparkles,
   Globe
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -612,6 +613,37 @@ export default function MapView({ onReportFault }) {
           <MapPin size={15} />
           {pinDropMode ? 'Click Map to Pin' : '+ Register on Map'}
         </button>
+
+        {/* Quick Nav Cluster */}
+        <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+          <button 
+            type="button" 
+            onClick={() => navigate('/faults')} 
+            className="btn-secondary"
+            style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem' }}
+          >
+            <AlertTriangle size={13} color="#F59E0B" />
+            Requests
+          </button>
+          <button 
+            type="button" 
+            onClick={() => navigate('/maintenance')} 
+            className="btn-secondary"
+            style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem' }}
+          >
+            <Wrench size={13} color="#38BDF8" />
+            Dispatch
+          </button>
+          <button 
+            type="button" 
+            onClick={() => navigate('/3d')} 
+            className="btn-secondary"
+            style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem' }}
+          >
+            <Sparkles size={13} color="#60A5FA" />
+            3D Grid
+          </button>
+        </div>
       </div>
 
       {/* Main Map View Area with Side List Drawer */}

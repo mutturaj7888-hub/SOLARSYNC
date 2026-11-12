@@ -15,6 +15,9 @@ import GlobalScrollBackground from './components/cinematic/GlobalScrollBackgroun
 
 import LoginPage from './pages/LoginPage';
 import CinematicLanding from './pages/CinematicLanding';
+import EchoidHeroPage from './pages/EchoidHeroPage';
+import SolarEchoidLanding from './pages/SolarEchoidLanding';
+import Solar3DCanvas from './components/3d/Solar3DCanvas';
 import DashboardView from './pages/DashboardView';
 import MapView from './pages/MapView';
 import AssetsView from './pages/AssetsView';
@@ -68,23 +71,23 @@ function ProtectedRoute({ children }) {
 
 /**
  * Platform Multi-Page Layout with Persistent 4K Scroll-Scrubbing Background
+ * Full-Viewport ECHOID Composition & Glowing 3D Moving Sun Backdrop
  */
 function AppLayout({ healthStatus, onRefreshHealth, children }) {
   return (
-    <div className="app-container" style={{ position: 'relative', minHeight: '100vh' }}>
-      {/* 4K Global Scroll-Scrubbing Video Background on EVERY page */}
-      <GlobalScrollBackground opacity={0.32} />
+    <div className="app-container" style={{ position: 'relative', minHeight: '100vh', background: '#000000', overflow: 'hidden' }}>
+      {/* Glowing 3D Motion Moving Sun at background */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.42 }}>
+        <Solar3DCanvas />
+      </div>
 
-      {/* Role-Adaptive Sidebar */}
-      <Sidebar />
-
-      {/* Main Multi-Page Shell */}
-      <div className="main-wrapper">
+      {/* Main Full-Viewport Shell with clean z-index hierarchy */}
+      <div className="main-wrapper" style={{ width: '100%', position: 'relative', zIndex: 10 }}>
         <Header 
           healthStatus={healthStatus} 
           onRefreshHealth={onRefreshHealth} 
         />
-        <main className="content-body">
+        <main className="content-body" style={{ maxWidth: '1440px', margin: '0 auto', width: '100%', position: 'relative', zIndex: 10 }}>
           <ErrorBoundary fallbackTitle="View Rendering Error">
             {children}
           </ErrorBoundary>
@@ -133,7 +136,10 @@ function MainRoutes() {
       {/* 1. Dedicated Multi-Page Authentication Portal */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* 2. Full 4K Cinematic Interactive Storytelling Experience */}
+      {/* 2. ECHOID — Reference Full-Viewport Dark Hero Experience */}
+      <Route path="/echoid" element={<EchoidHeroPage />} />
+
+      {/* 3. Full 4K Cinematic Interactive Storytelling Experience */}
       <Route 
         path="/experience" 
         element={
@@ -225,11 +231,14 @@ function MainRoutes() {
         } 
       />
 
-      {/* Root Route: Redirect to /login if unauthenticated, or /dashboard if authenticated */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* 3D Dark Hero Experience */}
+      <Route path="/3d" element={<SolarEchoidLanding />} />
+
+      {/* Root Route: SolarSync 3D Dark Hero Landing */}
+      <Route path="/" element={<SolarEchoidLanding />} />
 
       {/* Catch-all Fallback */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

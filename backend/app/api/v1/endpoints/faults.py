@@ -150,6 +150,49 @@ async def upload_photo(file: UploadFile = File(...)):
     }
 
 
+@router.post("/repair-all", summary="Repair and Verify All Open Faults")
+def repair_all_faults(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Instantly marks all open fault reports as VERIFIED_CLOSED,
+    records resolution timestamp, restores affected installations to OPERATIONAL,
+    and commits activity logs.
+    """
+    open_faults = db.query(FaultReport).filter(
+        FaultReport.status.notin_([FaultStatus.VERIFIED_CLOSED])
+    ).all()
+    
+    now = datetime.now(timezone.utc)
+    repaired_count = len(open_faults)
+    
+    for f in open_faults:
+        f.status = FaultStatus.VERIFIED_CLOSED
+        f.resolved_at = now
+        if f.installation:
+            f.installation.operational_status = OperationalStatus.OPERATIONAL
+
+    db.commit()
+
+    log = ActivityLog(
+        user_id=current_user.id,
+        user_name=current_user.full_name,
+        action="BATCH_FAULTS_REPAIRED",
+        description=f"Repaired and verified all {repaired_count} active solar fault tickets across grid.",
+        entity_type="fault_batch",
+        entity_id=0
+    )
+    db.add(log)
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": f"Successfully repaired and verified {repaired_count} solar faults. Grid status restored to OPERATIONAL.",
+        "repaired_count": repaired_count
+    }
+
+
 @router.put("/{fault_id}/status", response_model=FaultOut, summary="Update Fault Status")
 def update_fault_status(
     fault_id: int,

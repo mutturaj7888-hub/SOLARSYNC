@@ -15,9 +15,10 @@ import {
   FileText,
   MapPin,
   Layers,
+  Sparkles,
   Calendar
 } from 'lucide-react';
-import { getFaults, createFault, uploadFaultPhoto, getInstallations } from '../services/api';
+import { getFaults, createFault, uploadFaultPhoto, getInstallations, repairAllFaults, updateFaultStatus } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initialInstallationId = null }) {
@@ -39,6 +40,29 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
   const [severity, setSeverity] = useState('high');
   const [photoUrl, setPhotoUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [repairingAll, setRepairingAll] = useState(false);
+
+  const handleRepairAll = async () => {
+    setRepairingAll(true);
+    try {
+      const res = await repairAllFaults();
+      await loadData();
+      alert(res.message || "All faults repaired and verified successfully!");
+    } catch (err) {
+      alert("Repair all failed: " + (err.response?.data?.detail || err.message));
+    } finally {
+      setRepairingAll(false);
+    }
+  };
+
+  const handleQuickRepairSingle = async (faultId) => {
+    try {
+      await updateFaultStatus(faultId, 'verified_closed');
+      await loadData();
+    } catch (err) {
+      alert("Error repairing fault: " + (err.response?.data?.detail || err.message));
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -140,11 +164,36 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
             style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
           >
             <Wrench size={14} color="#38BDF8" />
-            Work Orders
+            Task Dispatch
           </button>
-          <button onClick={() => setShowModal(true)} className="btn-primary">
-            <Plus size={18} />
-            Report Equipment Fault
+          <button 
+            onClick={() => navigate('/3d')} 
+            className="btn-secondary"
+            style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
+          >
+            <Sparkles size={14} color="#60A5FA" />
+            3D Grid
+          </button>
+          <button 
+            onClick={handleRepairAll}
+            disabled={repairingAll}
+            className="btn-primary" 
+            style={{ 
+              padding: '0.45rem 0.95rem', 
+              fontSize: '0.775rem',
+              background: '#ffffff',
+              color: '#000000',
+              border: 'none',
+              fontWeight: 600,
+              cursor: repairingAll ? 'not-allowed' : 'pointer'
+            }}
+          >
+            <CheckCircle2 size={15} color="#000000" />
+            {repairingAll ? 'REPAIRING ALL...' : 'REPAIR ALL FAULTS'}
+          </button>
+          <button onClick={() => setShowModal(true)} className="btn-secondary" style={{ padding: '0.45rem 0.95rem', fontSize: '0.775rem' }}>
+            <Plus size={16} />
+            Report Problem Request
           </button>
         </div>
       </div>
@@ -338,6 +387,18 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
                   </span>
 
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    {!isResolved && (
+                      <button
+                        onClick={() => handleQuickRepairSingle(f.id)}
+                        className="btn-secondary"
+                        style={{ padding: '0.4rem 0.75rem', fontSize: '0.72rem', borderColor: 'rgba(52, 211, 153, 0.4)', color: '#34d399' }}
+                        title="Quick repair and mark ticket closed"
+                      >
+                        <CheckCircle2 size={13} color="#34d399" />
+                        Repair & Close
+                      </button>
+                    )}
+
                     <button
                       onClick={() => navigate('/map')}
                       className="btn-secondary"
@@ -348,14 +409,14 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
                       Map
                     </button>
 
-                    {f.status === 'reported' && userRole === 'admin' && (
+                    {f.status === 'reported' && (userRole === 'distributor' || userRole === 'admin') && (
                       <button
                         onClick={() => onOpenAssignModal && onOpenAssignModal(f)}
                         className="btn-primary"
                         style={{ padding: '0.4rem 0.85rem', fontSize: '0.775rem' }}
                       >
                         <Wrench size={13} />
-                        Dispatch Tech
+                        Assign Maintainer
                       </button>
                     )}
 

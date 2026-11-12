@@ -14,6 +14,7 @@ import {
   Cpu,
   Layers,
   X,
+  Sparkles,
   BarChart3
 } from 'lucide-react';
 import { getInstallations, createInstallation, deleteInstallation } from '../services/api';
@@ -166,8 +167,16 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
             <BarChart3 size={14} color="#A78BFA" />
             Analytics
           </button>
+          <button 
+            onClick={() => navigate('/3d')} 
+            className="btn-secondary"
+            style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
+          >
+            <Sparkles size={14} color="#60A5FA" />
+            3D Grid
+          </button>
           <button onClick={() => setShowModal(true)} className="btn-primary">
-            <Plus size={18} />
+            <Plus size={16} />
             Register Solar Asset
           </button>
         </div>
@@ -341,7 +350,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                 >
                   <MapPin size={14} color="var(--emerald-400)" />
                 </button>
-                {userRole === 'admin' && (
+                {(userRole === 'distributor' || userRole === 'admin') && (
                   <button
                     onClick={() => handleDelete(inst.id)}
                     style={{

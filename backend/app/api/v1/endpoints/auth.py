@@ -249,5 +249,8 @@ def list_technicians(
     current_user: User = Depends(get_current_user)
 ):
     """Returns list of technicians for maintenance job assignments."""
-    technicians = db.query(User).filter(User.role == UserRole.TECHNICIAN, User.is_active == True).all()
+    technicians = db.query(User).filter(
+        User.role.in_([UserRole.TECHNICIAN, UserRole.MAINTAINER]),
+        User.is_active == True
+    ).all()
     return technicians

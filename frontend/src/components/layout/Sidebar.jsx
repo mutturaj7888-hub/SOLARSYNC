@@ -25,32 +25,32 @@ export default function Sidebar() {
 
   // Role-based customized menu items
   const getMenuItems = () => {
-    if (userRole === 'technician') {
+    if (userRole === 'technician' || userRole === 'maintainer') {
       return [
         { path: '/dashboard', label: 'Maintainer Hub', icon: Wrench, badge: 'Active' },
-        { path: '/maintenance', label: 'My Work Orders', icon: Calendar, badge: 'Dispatch' },
+        { path: '/maintenance', label: 'Assigned Tasks', icon: Calendar, badge: 'Queue' },
         { path: '/map', label: 'Service Territory Map', icon: MapPin, badge: 'GIS' },
-        { path: '/faults', label: 'Reported Incidents', icon: AlertTriangle },
+        { path: '/faults', label: 'All Incidents', icon: AlertTriangle },
         { path: '/experience', label: 'Cinematic Story', icon: Sparkles, badge: 'Motion' },
       ];
     } else if (userRole === 'installation_owner') {
       return [
-        { path: '/dashboard', label: 'Rooftop Dashboard', icon: Sun, badge: 'Owner' },
-        { path: '/faults', label: 'Report Issue / Fault', icon: AlertTriangle, badge: 'Report' },
+        { path: '/dashboard', label: 'Resident Portal', icon: Sun, badge: 'Owner' },
+        { path: '/faults', label: 'Request Maintenance', icon: AlertTriangle, badge: 'Request' },
         { path: '/maintenance', label: 'Track Maintainer', icon: Wrench, badge: 'Live' },
-        { path: '/assets', label: 'My Rooftop Systems', icon: Layers },
+        { path: '/assets', label: 'My Solar Panels', icon: Layers },
         { path: '/map', label: 'Local Solar Map', icon: MapPin },
         { path: '/experience', label: 'Cinematic Story', icon: Sparkles, badge: 'Motion' },
       ];
     } else {
-      // Default Admin
+      // Default: Distributor (Assigns tasks to maintainers from requests)
       return [
-        { path: '/dashboard', label: 'Command Center', icon: Layers },
-        { path: '/map', label: 'Geospatial Explorer', icon: MapPin, badge: 'PostGIS' },
-        { path: '/assets', label: 'Solar Asset Registry', icon: Sun },
-        { path: '/faults', label: 'Incident Triage', icon: AlertTriangle },
-        { path: '/maintenance', label: 'Maintainer Dispatch', icon: Wrench, badge: 'Dispatch' },
-        { path: '/analytics', label: 'Fleet Analytics', icon: BarChart3 },
+        { path: '/dashboard', label: 'Distributor Hub', icon: Layers },
+        { path: '/faults', label: 'Nearby Requests', icon: AlertTriangle, badge: 'New' },
+        { path: '/maintenance', label: 'Assign Maintainers', icon: Wrench, badge: 'Dispatch' },
+        { path: '/map', label: 'Geospatial Grid', icon: MapPin, badge: 'PostGIS' },
+        { path: '/assets', label: 'Solar Fleet Registry', icon: Sun },
+        { path: '/analytics', label: 'Network Analytics', icon: BarChart3 },
         { path: '/experience', label: 'Cinematic Story', icon: Sparkles, badge: 'Motion' },
       ];
     }
@@ -63,11 +63,11 @@ export default function Sidebar() {
 
   const menuItems = getMenuItems();
 
-  const roleLabel = userRole === 'admin' 
-    ? 'Administrator (Full Fleet)' 
-    : userRole === 'technician' 
-    ? 'Field Maintainer' 
-    : 'Installation Owner';
+  const roleLabel = (userRole === 'distributor' || userRole === 'admin')
+    ? 'Distributor (Task Assigner)' 
+    : (userRole === 'technician' || userRole === 'maintainer')
+    ? 'Field Maintainer (Assigned Tasks)' 
+    : 'Nearby Resident / Owner';
 
   return (
     <aside className="sidebar" style={{ background: 'rgba(11, 17, 32, 0.95)', backdropFilter: 'blur(20px)' }}>
@@ -88,12 +88,12 @@ export default function Sidebar() {
         margin: '0.75rem 0.85rem 0.25rem',
         padding: '0.5rem 0.75rem',
         borderRadius: '10px',
-        background: userRole === 'admin' 
-          ? 'rgba(16, 185, 129, 0.08)' 
-          : userRole === 'technician' 
+        background: (userRole === 'distributor' || userRole === 'admin')
+          ? 'rgba(59, 130, 246, 0.12)' 
+          : (userRole === 'technician' || userRole === 'maintainer')
           ? 'rgba(56, 189, 248, 0.08)' 
           : 'rgba(245, 158, 11, 0.08)',
-        border: `1px solid ${userRole === 'admin' ? 'rgba(16, 185, 129, 0.25)' : userRole === 'technician' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`,
+        border: `1px solid ${(userRole === 'distributor' || userRole === 'admin') ? 'rgba(59, 130, 246, 0.3)' : (userRole === 'technician' || userRole === 'maintainer') ? 'rgba(56, 189, 248, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`,
         display: 'flex',
         alignItems: 'center',
         gap: '0.5rem'
@@ -102,7 +102,7 @@ export default function Sidebar() {
           width: '26px',
           height: '26px',
           borderRadius: '50%',
-          background: userRole === 'admin' ? '#10B981' : userRole === 'technician' ? '#0284C7' : '#D97706',
+          background: (userRole === 'distributor' || userRole === 'admin') ? '#2563EB' : (userRole === 'technician' || userRole === 'maintainer') ? '#0284C7' : '#D97706',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

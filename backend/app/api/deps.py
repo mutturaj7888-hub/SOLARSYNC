@@ -45,11 +45,23 @@ def get_current_user(
 def require_roles(allowed_roles: List[UserRole]):
     """Enforces Role-Based Access Control (RBAC) on protected endpoints."""
     def role_checker(current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role not in allowed_roles and current_user.role != UserRole.ADMIN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Operation not permitted. Required role: {[r.value for r in allowed_roles]}, your role: {current_user.role.value}"
-            )
-        return current_user
+        user_role = current_user.role
+        
+        # Check direct membership
+        if user_role in allowed_roles:
+            return current_user
+            
+        # Distributor privileges (inherits dispatching and assignment)
+        if (UserRole.ADMIN in allowed_roles or UserRole.DISTRIBUTOR in allowed_roles) and user_role in [UserRole.DISTRIBUTOR, UserRole.ADMIN]:
+            return current_user
+            
+        # Maintainer privileges (technician alias)
+        if (UserRole.TECHNICIAN in allowed_roles or UserRole.MAINTAINER in allowed_roles) and user_role in [UserRole.TECHNICIAN, UserRole.MAINTAINER]:
+            return current_user
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Operation not permitted. Required role: {[r.value for r in allowed_roles]}, your role: {current_user.role.value}"
+        )
     return role_checker
 
