@@ -378,8 +378,8 @@ export default function LoginPage() {
               {mode === 'register' ? (
                 <>
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94A3B8', marginBottom: '0.35rem', display: 'block' }}>
-                      YOUR NAME OR USERNAME
+                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94A3B8', marginBottom: '0.35rem', display: 'block', letterSpacing: '0.05em' }}>
+                      USERNAME
                     </label>
                     <div style={{ position: 'relative' }}>
                       <User size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#64748B' }} />
@@ -388,7 +388,7 @@ export default function LoginPage() {
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Enter your name (e.g. Nagaraj)"
+                        placeholder="Enter your username"
                         style={{
                           width: '100%',
                           padding: '0.7rem 1rem 0.7rem 2.4rem',
@@ -488,8 +488,8 @@ export default function LoginPage() {
               ) : (
                 <>
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94A3B8', marginBottom: '0.35rem', display: 'block' }}>
-                      NAME, USERNAME OR EMAIL
+                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94A3B8', marginBottom: '0.35rem', display: 'block', letterSpacing: '0.05em' }}>
+                      USERNAME
                     </label>
                     <div style={{ position: 'relative' }}>
                       <User size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#64748B' }} />
@@ -498,7 +498,7 @@ export default function LoginPage() {
                         required
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
-                        placeholder="Enter your registered name or email"
+                        placeholder="Enter your username"
                         style={{
                           width: '100%',
                           padding: '0.7rem 1rem 0.7rem 2.4rem',
@@ -514,7 +514,7 @@ export default function LoginPage() {
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94A3B8', marginBottom: '0.35rem', display: 'block' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94A3B8', marginBottom: '0.35rem', display: 'block', letterSpacing: '0.05em' }}>
                       PASSWORD
                     </label>
                     <div style={{ position: 'relative' }}>
@@ -562,7 +562,7 @@ export default function LoginPage() {
                   transition: 'all 0.2s'
                 }}
               >
-                {loading ? 'Authenticating...' : mode === 'login' ? 'Sign In to Workspace' : 'Complete Registration & Store in MongoDB'}
+                {loading ? 'Authenticating...' : mode === 'login' ? 'Sign In' : 'Register & Enter Workspace'}
                 <ArrowRight size={16} />
               </button>
             </form>
