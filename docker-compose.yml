@@ -1,0 +1,158 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: solarsync-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-solarsync_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-solarsync_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-solarsync_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-solarsync_admin} -d ${POSTGRES_DB:-solarsync_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - solarsync-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: solarsync-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - solarsync-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: solarsync-backend
+    restart: always
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-solarsync_admin}:${POSTGRES_PASSWORD:-solarsync_secret}@postgres:5432/${POSTGRES_DB:-solarsync_db}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-change_this_to_a_super_secure_random_string_in_production_32chars}
+      - BACKEND_CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173
+    volumes:
+      - ./backend/uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - solarsync-network
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: solarsync-celery-worker
+    command: celery -A app.workers.celery_app.celery worker --loglevel=info
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-solarsync_admin}:${POSTGRES_PASSWORD:-solarsync_secret}@postgres:5432/${POSTGRES_DB:-solarsync_db}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - backend
+      - redis
+      - postgres
+    networks:
+      - solarsync-network
+
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: solarsync-celery-beat
+    command: celery -A app.workers.celery_app.celery beat --loglevel=info
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-solarsync_admin}:${POSTGRES_PASSWORD:-solarsync_secret}@postgres:5432/${POSTGRES_DB:-solarsync_db}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - celery_worker
+      - redis
+    networks:
+      - solarsync-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: solarsync-frontend
+    restart: always
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - solarsync-network
+
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    container_name: solarsync-prometheus
+    restart: always
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - solarsync-network
+
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: solarsync-grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafanadata:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - solarsync-network
+
+networks:
+  solarsync-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  grafanadata:
