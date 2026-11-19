@@ -46,7 +46,7 @@ def get_dashboard_analytics(db: Session = Depends(get_db)):
             if delta_hours > 0:
                 mttr_sum += delta_hours
                 mttr_count += 1
-    avg_mttr = round(mttr_sum / mttr_count, 1) if mttr_count > 0 else 6.5
+    avg_mttr = round(mttr_sum / mttr_count, 1) if mttr_count > 0 else 0.0
 
     # Faults by Category
     faults_by_cat = {}
@@ -61,7 +61,7 @@ def get_dashboard_analytics(db: Session = Depends(get_db)):
         faults_by_sev[sev.value] = count
 
     # Technician Workloads
-    technicians = db.query(User).filter(User.role == UserRole.TECHNICIAN).all()
+    technicians = db.query(User).filter(User.role.in_([UserRole.TECHNICIAN, UserRole.MAINTAINER])).all()
     tech_workloads = []
     for t in technicians:
         assigned_jobs = t.assigned_jobs

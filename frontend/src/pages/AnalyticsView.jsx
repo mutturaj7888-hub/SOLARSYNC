@@ -113,7 +113,7 @@ export default function AnalyticsView() {
       }}>
         <Info size={18} flexShrink={0} />
         <div>
-          <b>Audited Data Traceability:</b> Metrics reflect verified work orders and registered asset capacity (184.5 kWp). No simulated generation curve measurements are fabricated.
+          <b>Audited Data Traceability:</b> Metrics reflect verified work orders and registered asset capacity ({data.total_capacity_kw || 0} kWp). All analytics are computed from live database records.
         </div>
       </div>
 

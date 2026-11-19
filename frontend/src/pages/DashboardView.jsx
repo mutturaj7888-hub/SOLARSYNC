@@ -21,14 +21,14 @@ export default function DashboardView() {
   const navigate = useNavigate();
 
   const [metrics, setMetrics] = useState({
-    total_installations: 7,
-    total_capacity_kw: 184.5,
-    operational_count: 5,
-    under_maintenance_count: 2,
-    fleet_health_percentage: 85.7,
-    open_fault_tickets: 2,
-    verified_repairs_count: 1,
-    average_mttr_hours: 6.5
+    total_installations: 0,
+    total_capacity_kw: 0,
+    operational_count: 0,
+    under_maintenance_count: 0,
+    fleet_health_percentage: 100,
+    open_fault_tickets: 0,
+    verified_repairs_count: 0,
+    average_mttr_hours: 0
   });
 
   const [recentFaults, setRecentFaults] = useState([]);
