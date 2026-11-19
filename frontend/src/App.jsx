@@ -13,7 +13,6 @@ import Header from './components/layout/Header';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import GlobalScrollBackground from './components/cinematic/GlobalScrollBackground';
 
-import LoginPage from './pages/LoginPage';
 import CinematicLanding from './pages/CinematicLanding';
 import EchoidHeroPage from './pages/EchoidHeroPage';
 import SolarEchoidLanding from './pages/SolarEchoidLanding';
@@ -31,7 +30,7 @@ import { checkSystemHealth } from './services/api';
 /**
  * Protected Route Gatekeeper
  * First asks for login to access any platform service.
- * Redirects to /login if unauthenticated.
+ * Redirects to / if unauthenticated.
  */
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -63,7 +62,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -133,8 +132,8 @@ function MainRoutes() {
 
   return (
     <Routes>
-      {/* 1. Dedicated Multi-Page Authentication Portal */}
-      <Route path="/login" element={<LoginPage />} />
+      {/* 1. Login Route: Automatically redirects to root (only one login page) */}
+      <Route path="/login" element={<Navigate to="/" replace />} />
 
       {/* 2. ECHOID — Reference Full-Viewport Dark Hero Experience */}
       <Route path="/echoid" element={<EchoidHeroPage />} />
@@ -146,7 +145,7 @@ function MainRoutes() {
           <CinematicLanding 
             onEnterApp={(route) => navigate(route ? (route.startsWith('/') ? route : `/${route}`) : '/dashboard')}
             onNavigate={(route) => navigate(route.startsWith('/') ? route : `/${route}`)}
-            onOpenAuth={() => navigate('/login')}
+            onOpenAuth={() => navigate('/')}
           />
         } 
       />
@@ -231,8 +230,8 @@ function MainRoutes() {
         } 
       />
 
-      {/* 3D Dark Hero Experience */}
-      <Route path="/3d" element={<SolarEchoidLanding />} />
+      {/* 3D Route Redirect */}
+      <Route path="/3d" element={<Navigate to="/" replace />} />
 
       {/* Root Route: SolarSync 3D Dark Hero Landing */}
       <Route path="/" element={<SolarEchoidLanding />} />

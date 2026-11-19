@@ -129,7 +129,7 @@ export default function Header({ healthStatus, onRefreshHealth }) {
 
             <button
               type="button"
-              onClick={() => { logout(); navigate('/login'); }}
+              onClick={() => { logout(); navigate('/'); }}
               style={{
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.7rem',
@@ -151,7 +151,7 @@ export default function Header({ healthStatus, onRefreshHealth }) {
         ) : (
           <button
             type="button"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/')}
             className="btn-primary"
             style={{ padding: '0.55rem 1.1rem', fontSize: '0.75rem' }}
           >

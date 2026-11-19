@@ -68,7 +68,7 @@ export default function EchoidHeroPage() {
     e.preventDefault();
     if (email) {
       // Direct access or redirect to platform
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   };
 
@@ -119,7 +119,7 @@ export default function EchoidHeroPage() {
             </nav>
 
             {/* Desktop CTA */}
-            <a href="/login" className="hero__nav-cta">
+            <a href="/" className="hero__nav-cta">
               Join up
             </a>
 
@@ -171,7 +171,7 @@ export default function EchoidHeroPage() {
               Contact
             </a>
           </nav>
-          <a href="/login" className="mobile-menu__cta" onClick={closeMenu}>
+          <a href="/" className="mobile-menu__cta" onClick={closeMenu}>
             Join up
           </a>
         </div>
@@ -229,7 +229,7 @@ export default function EchoidHeroPage() {
               <button
                 type="button"
                 className="btn--solid"
-                onClick={() => { window.location.href = '/login'; }}
+                onClick={() => { window.location.href = '/'; }}
               >
                 Access
               </button>

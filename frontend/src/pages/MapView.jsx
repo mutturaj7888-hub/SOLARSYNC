@@ -37,7 +37,7 @@ export default function MapView({ onReportFault }) {
   const [radiusKm, setRadiusKm] = useState(15);
   const [statusFilter, setStatusFilter] = useState('all');
   
-  // Map Style state: 'streets' (default OpenStreetMap) | 'satellite' (Mapbox HD) | 'dark' (CartoDB Dark)
+  // Map Style state: 'streets' (default OpenStreetMap) | 'satellite' (Mapbox HD)
   const [mapStyle, setMapStyle] = useState('streets');
 
   // Installations data
@@ -502,7 +502,7 @@ export default function MapView({ onReportFault }) {
           {geoLocating ? "Locating..." : "Find Near Me"}
         </button>
 
-        {/* Interactive Layer Switcher (OpenStreetMap / Satellite HD / Cyber Dark) */}
+        {/* Interactive Layer Switcher (OpenStreetMap / Satellite HD) */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -545,21 +545,6 @@ export default function MapView({ onReportFault }) {
             }}
           >
             Satellite HD
-          </button>
-          <button
-            onClick={() => setMapStyle('dark')}
-            style={{
-              padding: '0.35rem 0.65rem',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              background: mapStyle === 'dark' ? 'rgba(56, 189, 248, 0.3)' : 'transparent',
-              color: mapStyle === 'dark' ? 'var(--sky-400)' : 'var(--text-secondary)',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            Cyber Dark
           </button>
         </div>
 
