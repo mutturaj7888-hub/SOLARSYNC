@@ -27,6 +27,7 @@ import {
   createSchedule,
   submitRepairEvidence,
   verifyRepair,
+  getFaultEvidence,
   getTechnicians,
   getFaults,
   uploadFaultPhoto
@@ -62,8 +63,9 @@ export default function MaintenanceView({
   const [workSummary, setWorkSummary] = useState('');
   const [partsReplaced, setPartsReplaced] = useState('');
   const [hoursSpent, setHoursSpent] = useState(2);
+  const [isSubmittingEvidence, setIsSubmittingEvidence] = useState(false);
 
-  // Review & Verify Modal (Owner / Admin)
+  // Review & Verify Modal (Owner / Distributor / Admin)
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [evidenceToReview, setEvidenceToReview] = useState(null);
   const [verifyNotes, setVerifyNotes] = useState('');
@@ -101,17 +103,32 @@ export default function MaintenanceView({
 
   // Handle preselected verification modal request from other tabs
   useEffect(() => {
-    if (verifyTargetFault) {
-      setEvidenceToReview({
-        fault: verifyTargetFault,
-        before_photo_url: verifyTargetFault.photo_url || "https://images.unsplash.com/photo-1508873696983-2df5293cb32f?w=600&auto=format&fit=crop&q=80",
-        after_photo_url: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80",
-        work_summary: "Replaced faulty inverter MPPT boards and cleaned solar string terminals.",
-        parts_replaced: "Sungrow 50kW MPPT replacement kit",
-        id: 1
-      });
-      setShowVerifyModal(true);
-    }
+    const fetchEvidenceForFault = async () => {
+      if (verifyTargetFault) {
+        try {
+          const evidenceList = await getFaultEvidence(verifyTargetFault.id).catch(() => []);
+          if (evidenceList && evidenceList.length > 0) {
+            setEvidenceToReview({
+              ...evidenceList[0],
+              fault: verifyTargetFault
+            });
+          } else {
+            setEvidenceToReview({
+              id: verifyTargetFault.id,
+              fault: verifyTargetFault,
+              before_photo_url: verifyTargetFault.photo_url || "https://images.unsplash.com/photo-1508873696983-2df5293cb32f?w=600&auto=format&fit=crop&q=80",
+              after_photo_url: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80",
+              work_summary: "Maintainer completed on-site repair and verified operational status.",
+              parts_replaced: "Cleaned and verified components"
+            });
+          }
+          setShowVerifyModal(true);
+        } catch (err) {
+          console.warn("Error fetching repair evidence:", err);
+        }
+      }
+    };
+    fetchEvidenceForFault();
   }, [verifyTargetFault]);
 
   // Handle Start Job
@@ -131,10 +148,11 @@ export default function MaintenanceView({
     setShowEvidenceModal(true);
   };
 
-  // Submit Evidence
+  // Submit Evidence (Single submission only)
   const handleSubmitEvidence = async (e) => {
     e.preventDefault();
-    if (!activeAssignment) return;
+    if (!activeAssignment || isSubmittingEvidence) return;
+    setIsSubmittingEvidence(true);
     try {
       await submitRepairEvidence({
         fault_report_id: activeAssignment.fault_report_id,
@@ -145,10 +163,16 @@ export default function MaintenanceView({
         repair_duration_hours: parseInt(hoursSpent) || 2
       });
       setShowEvidenceModal(false);
+      setBeforePhoto('');
+      setAfterPhoto('');
+      setWorkSummary('');
+      setPartsReplaced('');
       loadData();
-      alert("Repair evidence submitted! Awaiting owner/administrator verification.");
+      alert("Repair evidence submitted successfully! Resident has been notified to inspect and confirm.");
     } catch (err) {
       alert("Error: " + (err.response?.data?.detail || err.message));
+    } finally {
+      setIsSubmittingEvidence(false);
     }
   };
 
@@ -178,11 +202,12 @@ export default function MaintenanceView({
   const handleVerifyDecision = async (approved) => {
     if (!evidenceToReview) return;
     try {
-      await verifyRepair(evidenceToReview.id || 1, approved, verifyNotes || "Inspected and confirmed.");
+      const targetId = evidenceToReview.id || evidenceToReview.fault?.id || 1;
+      await verifyRepair(targetId, approved, verifyNotes || "Inspected and confirmed.");
       setShowVerifyModal(false);
       onClearVerifyTarget();
       loadData();
-      alert(approved ? "Repair APPROVED & Ticket Closed! Installation restored to Operational." : "Repair REJECTED & Reopened with technician feedback.");
+      alert(approved ? "Repair APPROVED & Ticket Closed! Installation restored to Operational." : "Repair REJECTED & Reopened with feedback.");
     } catch (err) {
       alert("Error: " + (err.response?.data?.detail || err.message));
     }
@@ -393,8 +418,36 @@ export default function MaintenanceView({
                         fontWeight: 600
                       }}>
                         <CheckCircle2 size={16} />
-                        Repair Completed
+                        Repair Solved (Evidence Submitted)
                       </div>
+                    )}
+
+                    {assign.completed_at && (userRole === 'distributor' || userRole === 'admin') && (
+                      <button
+                        onClick={async () => {
+                          const evidenceList = await getFaultEvidence(assign.fault_report_id).catch(() => []);
+                          if (evidenceList && evidenceList.length > 0) {
+                            setEvidenceToReview({
+                              ...evidenceList[0],
+                              fault: { id: assign.fault_report_id, ticket_number: assign.ticket_number }
+                            });
+                          } else {
+                            setEvidenceToReview({
+                              id: assign.fault_report_id,
+                              fault: { id: assign.fault_report_id, ticket_number: assign.ticket_number },
+                              before_photo_url: "https://images.unsplash.com/photo-1508873696983-2df5293cb32f?w=600&auto=format&fit=crop&q=80",
+                              after_photo_url: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80",
+                              work_summary: assign.dispatch_notes || "Field maintenance completed and inspected on site."
+                            });
+                          }
+                          setShowVerifyModal(true);
+                        }}
+                        className="btn-primary"
+                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem', background: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' }}
+                      >
+                        <ShieldCheck size={14} />
+                        Verify & Close Ticket
+                      </button>
                     )}
                   </div>
                 </div>
@@ -631,8 +684,18 @@ export default function MaintenanceView({
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
-                  Submit Evidence for Sign-off
+                <button 
+                  type="submit" 
+                  disabled={isSubmittingEvidence}
+                  className="btn-primary" 
+                  style={{ 
+                    flex: 1, 
+                    justifyContent: 'center',
+                    opacity: isSubmittingEvidence ? 0.6 : 1,
+                    cursor: isSubmittingEvidence ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isSubmittingEvidence ? "Submitting Evidence..." : "Submit Evidence for Sign-off"}
                 </button>
                 <button type="button" onClick={() => setShowEvidenceModal(false)} className="btn-secondary">
                   Cancel

@@ -28,6 +28,7 @@ class FaultStatus(str, enum.Enum):
     ASSIGNED = "assigned"
     IN_PROGRESS = "in_progress"
     RESOLVED_PENDING_VERIFICATION = "resolved_pending_verification"
+    RESIDENT_CONFIRMED = "resident_confirmed"
     VERIFIED_CLOSED = "verified_closed"
     REJECTED_REOPENED = "rejected_reopened"
 

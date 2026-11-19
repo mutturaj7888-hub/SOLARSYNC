@@ -36,7 +36,7 @@ def get_assignments(
     """Retrieve work order assignments. Strictly role-scoped: Maintainers see only their queue, Owners see their installations, Admin sees all."""
     query = db.query(MaintenanceAssignment)
     
-    if current_user.role == UserRole.TECHNICIAN:
+    if current_user.role in [UserRole.TECHNICIAN, UserRole.MAINTAINER]:
         query = query.filter(MaintenanceAssignment.technician_id == current_user.id)
     elif current_user.role == UserRole.INSTALLATION_OWNER:
         from app.models.installation import SolarInstallation

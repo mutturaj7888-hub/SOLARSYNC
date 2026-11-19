@@ -10,15 +10,16 @@ import {
   Camera, 
   ArrowRight, 
   ShieldAlert, 
+  ShieldCheck,
   X, 
   Wrench, 
-  FileText,
-  MapPin,
-  Layers,
-  Sparkles,
-  Calendar
+  FileText, 
+  MapPin, 
+  Layers, 
+  Sparkles, 
+  Calendar 
 } from 'lucide-react';
-import { getFaults, createFault, uploadFaultPhoto, getInstallations, repairAllFaults, updateFaultStatus } from '../services/api';
+import { getFaults, createFault, uploadFaultPhoto, getInstallations, repairAllFaults, updateFaultStatus, confirmRepairByResident } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initialInstallationId = null }) {
@@ -64,6 +65,16 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
     }
   };
 
+  const handleConfirmByResident = async (faultId) => {
+    try {
+      await confirmRepairByResident(faultId);
+      await loadData();
+      alert("Confirmation sent to Distributor! The distributor can now verify and close the ticket.");
+    } catch (err) {
+      alert("Error confirming repair: " + (err.response?.data?.detail || err.message));
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -72,9 +83,19 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
         getInstallations()
       ]);
       setFaults(faultsData);
-      setInstallations(instsData);
-      if (!formInstId && instsData.length > 0) {
-        setFormInstId(instsData[0].id);
+      
+      // Residents can only report faults for their own registered solar installations
+      const filteredInsts = (userRole === 'installation_owner')
+        ? instsData.filter(i => i.owner_id === currentUser?.id)
+        : instsData;
+      setInstallations(filteredInsts);
+
+      if (filteredInsts.length > 0) {
+        if (!formInstId || !filteredInsts.some(i => i.id === parseInt(formInstId))) {
+          setFormInstId(filteredInsts[0].id);
+        }
+      } else {
+        setFormInstId('');
       }
     } catch (err) {
       console.warn("Error loading faults:", err);
@@ -373,15 +394,45 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
                     fontWeight: 700,
                     padding: '0.25rem 0.65rem',
                     borderRadius: '9999px',
-                    background: isResolved ? 'rgba(16, 185, 129, 0.15)' : isPendingVerification ? 'rgba(56, 189, 248, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                    color: isResolved ? 'var(--emerald-400)' : isPendingVerification ? 'var(--sky-400)' : 'var(--amber-400)',
+                    background: isResolved ? 'rgba(16, 185, 129, 0.15)' : (f.status === 'resolved_pending_verification' || f.status === 'resident_confirmed') ? 'rgba(56, 189, 248, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                    color: isResolved ? 'var(--emerald-400)' : (f.status === 'resolved_pending_verification' || f.status === 'resident_confirmed') ? 'var(--sky-400)' : 'var(--amber-400)',
                     fontFamily: 'var(--font-mono)'
                   }}>
-                    {f.status.replace(/_/g, ' ').toUpperCase()}
+                    {f.status === 'resolved_pending_verification' 
+                      ? (userRole === 'installation_owner' ? 'ISSUE SOLVED (CONFIRMATION NEEDED)' : 'ISSUE SOLVED (AWAITING RESIDENT CONFIRMATION)')
+                      : f.status === 'resident_confirmed'
+                      ? (userRole === 'distributor' || userRole === 'admin' ? 'RESIDENT CONFIRMED — READY TO CLOSE' : 'CONFIRMED — AWAITING DISTRIBUTOR FINAL CLOSE')
+                      : f.status.replace(/_/g, ' ').toUpperCase()}
                   </span>
 
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    {!isResolved && (
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {/* Resident Confirms Solution to Distributor */}
+                    {f.status === 'resolved_pending_verification' && userRole === 'installation_owner' && (
+                      <button
+                        onClick={() => handleConfirmByResident(f.id)}
+                        className="btn-primary"
+                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' }}
+                        title="Confirm that the maintainer solved the issue and send to distributor to close"
+                      >
+                        <CheckCircle2 size={13} />
+                        Confirm Repair to Distributor
+                      </button>
+                    )}
+
+                    {/* Distributor or Admin Closes / Reviews Evidence */}
+                    {(f.status === 'resolved_pending_verification' || f.status === 'resident_confirmed') && (userRole === 'distributor' || userRole === 'admin') && (
+                      <button
+                        onClick={() => onOpenVerifyModal && onOpenVerifyModal(f)}
+                        className="btn-primary"
+                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.775rem', background: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' }}
+                        title="Review maintainer repair evidence and close ticket"
+                      >
+                        <ShieldCheck size={13} />
+                        {f.status === 'resident_confirmed' ? 'Verify & Close Issue' : 'Review Evidence & Close'}
+                      </button>
+                    )}
+
+                    {!isResolved && (userRole === 'distributor' || userRole === 'admin') && (
                       <button
                         onClick={() => handleQuickRepairSingle(f.id)}
                         className="btn-secondary"
@@ -411,17 +462,6 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
                       >
                         <Wrench size={13} />
                         Assign Maintainer
-                      </button>
-                    )}
-
-                    {isPendingVerification && (
-                      <button
-                        onClick={() => onOpenVerifyModal && onOpenVerifyModal(f)}
-                        className="btn-primary"
-                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.775rem', background: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' }}
-                      >
-                        <CheckCircle2 size={13} />
-                        Review Evidence
                       </button>
                     )}
                   </div>
@@ -466,21 +506,39 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
             </div>
 
             <form onSubmit={handleReportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Select Solar Installation</label>
-                <select
-                  value={formInstId}
-                  onChange={(e) => setFormInstId(e.target.value)}
-                  required
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
-                >
-                  {installations.map((inst) => (
-                    <option key={inst.id} value={inst.id}>
-                      {inst.name} ({inst.capacity_kw} kW) — {inst.city}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {userRole === 'installation_owner' && installations.length === 0 ? (
+                <div style={{
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#FCA5A5',
+                  fontSize: '0.85rem'
+                }}>
+                  <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: '#EF4444' }}>
+                    No Registered Solar Installations Found
+                  </div>
+                  As a resident, you can only report faults for your own registered solar assets. Please register your rooftop solar under the <strong>Asset Registry</strong> tab first.
+                </div>
+              ) : (
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
+                    Select Solar Installation {userRole === 'installation_owner' && '(Your Registered Rooftop Systems)'}
+                  </label>
+                  <select
+                    value={formInstId}
+                    onChange={(e) => setFormInstId(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
+                  >
+                    {installations.map((inst) => (
+                      <option key={inst.id} value={inst.id}>
+                        {inst.name} ({inst.capacity_kw} kW) — {inst.city}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Issue Headline</label>
@@ -566,7 +624,17 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+                <button 
+                  type="submit" 
+                  disabled={userRole === 'installation_owner' && installations.length === 0}
+                  className="btn-primary" 
+                  style={{ 
+                    flex: 1, 
+                    justifyContent: 'center',
+                    opacity: (userRole === 'installation_owner' && installations.length === 0) ? 0.5 : 1,
+                    cursor: (userRole === 'installation_owner' && installations.length === 0) ? 'not-allowed' : 'pointer'
+                  }}
+                >
                   Submit Incident Ticket
                 </button>
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">

@@ -14,7 +14,7 @@ from app.models.fault import FaultReport, FaultStatus, FaultCategory, FaultSever
 from app.models.activity import ActivityLog
 from app.models.notification import Notification
 from app.schemas.fault import FaultCreate, FaultUpdate, FaultOut
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_roles
 
 router = APIRouter()
 
@@ -38,6 +38,8 @@ def get_fault_reports(
     # Non-admins and non-technicians see faults only for their installations
     if current_user.role == UserRole.INSTALLATION_OWNER:
         user_inst_ids = [i.id for i in current_user.installations]
+        if not user_inst_ids:
+            return []
         query = query.filter(FaultReport.installation_id.in_(user_inst_ids))
 
     if installation_id:
@@ -81,6 +83,13 @@ def create_fault_report(
     inst = db.query(SolarInstallation).filter(SolarInstallation.id == fault_in.installation_id).first()
     if not inst:
         raise HTTPException(status_code=404, detail="Solar installation not found")
+
+    # Residents can report faults only for their own registered solar installations
+    if current_user.role == UserRole.INSTALLATION_OWNER and inst.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only report faults for your own registered solar installations."
+        )
 
     # Generate unique ticket reference
     ticket_num = f"FLT-{uuid.uuid4().hex[:6].upper()}"
@@ -225,4 +234,56 @@ def update_fault_status(
     if fault.installation:
         out.installation_name = fault.installation.name
     return out
+
+
+@router.post("/{fault_id}/confirm-resident", response_model=FaultOut, summary="Resident Confirms Repair to Distributor")
+def confirm_repair_by_resident(
+    fault_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles([UserRole.INSTALLATION_OWNER, UserRole.ADMIN]))
+):
+    """
+    Resident inspects completed repair on their solar installation and
+    confirms to the distributor that the issue is solved so that the distributor can close it.
+    """
+    fault = db.query(FaultReport).filter(FaultReport.id == fault_id).first()
+    if not fault:
+        raise HTTPException(status_code=404, detail="Fault report not found")
+        
+    inst = fault.installation
+    if current_user.role == UserRole.INSTALLATION_OWNER and inst and inst.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only confirm repairs on your own solar installations")
+
+    fault.status = FaultStatus.RESIDENT_CONFIRMED
+    db.commit()
+    db.refresh(fault)
+
+    # Notify distributors that resident has confirmed and issue is ready to close
+    distributors = db.query(User).filter(User.role.in_([UserRole.DISTRIBUTOR, UserRole.ADMIN])).all()
+    for d in distributors:
+        notif = Notification(
+            user_id=d.id,
+            title="Resident Confirmed Repair — Ready to Close",
+            message=f"Resident {current_user.full_name} confirmed issue solved for {fault.ticket_number} on '{inst.name if inst else ''}'. Please verify and close ticket.",
+            event_type="repair_confirmed",
+            link_url=f"/maintenance?ticket={fault.ticket_number}"
+        )
+        db.add(notif)
+
+    log = ActivityLog(
+        user_id=current_user.id,
+        user_name=current_user.full_name,
+        action="RESIDENT_CONFIRMED",
+        description=f"Resident confirmed repair for ticket {fault.ticket_number}. Sent to distributor for final closing.",
+        entity_type="fault",
+        entity_id=fault.id
+    )
+    db.add(log)
+    db.commit()
+
+    out = FaultOut.model_validate(fault)
+    if inst:
+        out.installation_name = inst.name
+    return out
+
 

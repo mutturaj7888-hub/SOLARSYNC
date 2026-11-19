@@ -135,6 +135,11 @@ export const updateFaultStatus = async (faultId, status) => {
   return response.data;
 };
 
+export const confirmRepairByResident = async (faultId) => {
+  const response = await apiClient.post(`/faults/${faultId}/confirm-resident`);
+  return response.data;
+};
+
 export const repairAllFaults = async () => {
   const response = await apiClient.post('/faults/repair-all');
   return response.data;

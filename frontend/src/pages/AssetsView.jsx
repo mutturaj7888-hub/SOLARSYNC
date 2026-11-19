@@ -29,6 +29,28 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
+  const [detectingGps, setDetectingGps] = useState(false);
+
+  const CITY_COORDINATES = {
+    'bengaluru': { lat: 12.9716, lng: 77.5946 },
+    'bangalore': { lat: 12.9716, lng: 77.5946 },
+    'mysuru': { lat: 12.2958, lng: 76.6394 },
+    'mysore': { lat: 12.2958, lng: 76.6394 },
+    'hubballi': { lat: 15.3647, lng: 75.1240 },
+    'hubli': { lat: 15.3647, lng: 75.1240 },
+    'dharwad': { lat: 15.4589, lng: 75.0078 },
+    'mangaluru': { lat: 12.9141, lng: 74.8560 },
+    'mangalore': { lat: 12.9141, lng: 74.8560 },
+    'belagavi': { lat: 15.8497, lng: 74.4977 },
+    'belgaum': { lat: 15.8497, lng: 74.4977 },
+    'tumakuru': { lat: 13.3409, lng: 77.1010 },
+    'shivamogga': { lat: 13.9299, lng: 75.5681 },
+    'kalaburagi': { lat: 17.3297, lng: 76.8343 },
+    'davanagere': { lat: 14.4644, lng: 75.9218 },
+    'ballari': { lat: 15.1394, lng: 76.9214 },
+    'udupi': { lat: 13.3409, lng: 74.7421 },
+    'hassan': { lat: 13.0072, lng: 76.0962 },
+  };
 
   // Form State
   const [formData, setFormData] = useState({
@@ -40,12 +62,52 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
     latitude: 12.9716,
     longitude: 77.5946,
     capacity_kw: 25.0,
-    installation_type: 'rooftop_commercial',
+    installation_type: 'rooftop_residential',
     inverter_mfr: 'Sungrow',
     inverter_model: 'SG50CX 50kW',
     panel_mfr: 'Canadian Solar',
     panel_model: 'HiKu6 540W Mono',
   });
+
+  const autoDetectLocation = () => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      setDetectingGps(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setFormData(prev => ({
+            ...prev,
+            latitude: parseFloat(pos.coords.latitude.toFixed(4)),
+            longitude: parseFloat(pos.coords.longitude.toFixed(4))
+          }));
+          setDetectingGps(false);
+        },
+        () => {
+          setDetectingGps(false);
+        },
+        { timeout: 8000 }
+      );
+    }
+  };
+
+  const handleCityChange = (cityVal) => {
+    const key = cityVal.trim().toLowerCase();
+    if (CITY_COORDINATES[key]) {
+      setFormData(prev => ({
+        ...prev,
+        city: cityVal,
+        latitude: CITY_COORDINATES[key].lat,
+        longitude: CITY_COORDINATES[key].lng
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, city: cityVal }));
+    }
+  };
+
+  useEffect(() => {
+    if (showModal) {
+      autoDetectLocation();
+    }
+  }, [showModal]);
 
   const loadData = async () => {
     setLoading(true);
@@ -451,7 +513,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   <input
                     type="text" required
                     value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    onChange={(e) => handleCityChange(e.target.value)}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                   />
                 </div>
@@ -466,25 +528,39 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Latitude</label>
-                  <input
-                    type="number" step="0.0001" required
-                    value={formData.latitude}
-                    onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
-                  />
+              {/* Auto-detected GPS Coordinates (No manual lat/long entry) */}
+              <div style={{
+                padding: '0.75rem 1rem',
+                borderRadius: 'var(--radius-md)',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.5rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <MapPin size={16} color="var(--emerald-400)" />
+                  <div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--emerald-400)' }}>
+                      Rooftop Location (Auto-detected GPS)
+                    </div>
+                    <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+                      {formData.latitude}° N, {formData.longitude}° E ({formData.city})
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Longitude</label>
-                  <input
-                    type="number" step="0.0001" required
-                    value={formData.longitude}
-                    onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={autoDetectLocation}
+                  className="btn-secondary"
+                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.725rem' }}
+                  title="Fetch current device GPS location"
+                >
+                  <Sparkles size={12} color="#10B981" />
+                  {detectingGps ? "Detecting GPS..." : "Refresh GPS"}
+                </button>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
