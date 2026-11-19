@@ -95,14 +95,6 @@ export default function AnalyticsView() {
             <Sun size={14} color="#38BDF8" />
             Asset Registry
           </button>
-          <button 
-            onClick={() => navigate('/3d')} 
-            className="btn-secondary"
-            style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
-          >
-            <Sparkles size={14} color="#60A5FA" />
-            3D Grid
-          </button>
         </div>
       </div>
 

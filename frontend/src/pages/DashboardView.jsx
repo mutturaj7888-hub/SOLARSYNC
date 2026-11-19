@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Sun, 
-  CheckCircle2, 
-  Wrench, 
-  AlertTriangle, 
-  MapPin, 
-  Sparkles, 
-  UserCheck, 
+import {
+  Sun,
+  CheckCircle2,
+  Wrench,
+  AlertTriangle,
+  MapPin,
+  Sparkles,
+  UserCheck,
   ArrowRight,
   Shield,
   Layers,
@@ -58,7 +58,7 @@ export default function DashboardView() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', maxWidth: '1360px', margin: '0 auto' }}>
-      
+
       {/* ECHOID Editorial Header */}
       <div>
         {/* Chip */}
@@ -107,8 +107,8 @@ export default function DashboardView() {
           {isDistributor
             ? 'Assign incoming problem requests from nearby residents to certified local maintainers.'
             : isMaintainer
-            ? 'Active service orders dispatched to you. Execute repairs, update progress, and upload dual photo proof.'
-            : 'Live telemetry for your registered photovoltaic installations. Request maintainer dispatch for equipment faults.'}
+              ? 'Active service orders dispatched to you. Execute repairs, update progress, and upload dual photo proof.'
+              : 'Live telemetry for your registered photovoltaic installations. Request maintainer dispatch for equipment faults.'}
         </p>
       </div>
 
@@ -179,33 +179,26 @@ export default function DashboardView() {
       }}>
         {isDistributor && (
           <>
-            <button 
-              onClick={() => navigate('/maintenance')} 
+            <button
+              onClick={() => navigate('/maintenance')}
               className="btn-primary"
             >
               Assign Tasks to Maintainers
             </button>
-            <button 
-              onClick={() => navigate('/faults')} 
+            <button
+              onClick={() => navigate('/faults')}
               className="btn-secondary"
             >
               Nearby Requests ({recentFaults.length})
             </button>
-            <button 
-              onClick={() => navigate('/map')} 
+            <button
+              onClick={() => navigate('/map')}
               className="btn-secondary"
             >
               Geospatial Map
             </button>
-            <button 
-              onClick={() => navigate('/3d')} 
-              className="btn-secondary"
-            >
-              <Sparkles size={13} color="#60A5FA" />
-              3D Energy Matrix
-            </button>
-            <button 
-              onClick={() => navigate('/assets')} 
+            <button
+              onClick={() => navigate('/assets')}
               className="btn-secondary"
             >
               Asset Registry
@@ -215,54 +208,40 @@ export default function DashboardView() {
 
         {isMaintainer && (
           <>
-            <button 
-              onClick={() => navigate('/maintenance')} 
+            <button
+              onClick={() => navigate('/maintenance')}
               className="btn-primary"
             >
               My Assigned Work Orders
             </button>
-            <button 
-              onClick={() => navigate('/map')} 
+            <button
+              onClick={() => navigate('/map')}
               className="btn-secondary"
             >
               Service Area Map
-            </button>
-            <button 
-              onClick={() => navigate('/3d')} 
-              className="btn-secondary"
-            >
-              <Sparkles size={13} color="#60A5FA" />
-              3D Matrix
             </button>
           </>
         )}
 
         {isResident && (
           <>
-            <button 
-              onClick={() => navigate('/faults')} 
+            <button
+              onClick={() => navigate('/faults')}
               className="btn-primary"
             >
               Report Problem to Maintainers
             </button>
-            <button 
-              onClick={() => navigate('/assets')} 
+            <button
+              onClick={() => navigate('/assets')}
               className="btn-secondary"
             >
               My Solar Panels
             </button>
-            <button 
-              onClick={() => navigate('/map')} 
+            <button
+              onClick={() => navigate('/map')}
               className="btn-secondary"
             >
               Local Solar Map
-            </button>
-            <button 
-              onClick={() => navigate('/3d')} 
-              className="btn-secondary"
-            >
-              <Sparkles size={13} color="#60A5FA" />
-              3D Matrix
             </button>
           </>
         )}

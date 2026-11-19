@@ -155,6 +155,10 @@ export default function MaintenanceView({
   // Assign Tech Submit
   const handleAssignSubmit = async (e) => {
     e.preventDefault();
+    if (userRole !== 'distributor' && userRole !== 'admin') {
+      alert("Access Denied: Only Distributors have permission to assign maintainers.");
+      return;
+    }
     try {
       await assignTechnician({
         fault_report_id: parseInt(selectedFaultId),
@@ -229,14 +233,6 @@ export default function MaintenanceView({
           >
             <Sun size={14} color="#38BDF8" />
             Asset Registry
-          </button>
-          <button 
-            onClick={() => navigate('/3d')} 
-            className="btn-secondary"
-            style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
-          >
-            <Sparkles size={14} color="#60A5FA" />
-            3D Holographic Grid
           </button>
           {(userRole === 'distributor' || userRole === 'admin') && (
             <button onClick={() => setShowAssignModal(true)} className="btn-primary">
@@ -345,7 +341,7 @@ export default function MaintenanceView({
                       Map
                     </button>
 
-                    {!assign.started_at && (
+                    {(userRole === 'technician' || userRole === 'maintainer' || userRole === 'admin') && !assign.started_at && (
                       <button
                         onClick={() => handleStartJob(assign.id)}
                         className="btn-primary"
@@ -356,7 +352,7 @@ export default function MaintenanceView({
                       </button>
                     )}
 
-                    {assign.started_at && !assign.completed_at && (
+                    {(userRole === 'technician' || userRole === 'maintainer' || userRole === 'admin') && assign.started_at && !assign.completed_at && (
                       <button
                         onClick={() => handleOpenEvidence(assign)}
                         className="btn-primary"
@@ -365,6 +361,23 @@ export default function MaintenanceView({
                         <Camera size={15} />
                         Submit Repair Evidence
                       </button>
+                    )}
+
+                    {userRole === 'installation_owner' && !assign.completed_at && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: 'var(--radius-md)',
+                        background: assign.started_at ? 'rgba(56, 189, 248, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                        color: assign.started_at ? 'var(--sky-400)' : 'var(--amber-400)',
+                        fontSize: '0.8rem',
+                        fontWeight: 600
+                      }}>
+                        <Clock size={15} />
+                        {assign.started_at ? 'Maintainer On Site (In Progress)' : 'Maintainer Dispatched (Queued)'}
+                      </div>
                     )}
 
                     {assign.completed_at && (

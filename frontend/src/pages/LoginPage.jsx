@@ -165,41 +165,6 @@ export default function LoginPage() {
             // AUTH GATEWAY
           </span>
         </Link>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Link
-            to="/dashboard"
-            style={{
-              fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-              fontSize: '0.72rem',
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: 'rgba(255, 255, 255, 0.65)',
-              textDecoration: 'none',
-              padding: '8px 16px',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              transition: 'all 0.2s'
-            }}
-          >
-            Console
-          </Link>
-          <Link
-            to="/3d"
-            style={{
-              fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-              fontSize: '0.72rem',
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: '#ffffff',
-              textDecoration: 'none',
-              padding: '8px 16px',
-              border: '1px solid rgba(255, 255, 255, 0.28)',
-              background: 'rgba(255, 255, 255, 0.06)'
-            }}
-          >
-            3D Grid
-          </Link>
-        </div>
       </header>
 
       {/* Main Viewport Content */}

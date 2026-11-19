@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Sun, 
-  Plus, 
-  Search, 
-  Filter, 
-  MapPin, 
-  Wrench, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Trash2, 
+import {
+  Sun,
+  Plus,
+  Search,
+  Filter,
+  MapPin,
+  Wrench,
+  AlertTriangle,
+  CheckCircle2,
+  Trash2,
   ExternalLink,
   Cpu,
   Layers,
@@ -114,8 +114,8 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
 
   // Filtered items
   const filtered = installations.filter((inst) => {
-    const matchesSearch = inst.name.toLowerCase().includes(search.toLowerCase()) || 
-                          inst.city.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = inst.name.toLowerCase().includes(search.toLowerCase()) ||
+      inst.city.toLowerCase().includes(search.toLowerCase());
     const matchesType = typeFilter === 'all' || inst.installation_type === typeFilter;
     const matchesStatus = statusFilter === 'all' || inst.operational_status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
@@ -135,45 +135,37 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
         </div>
 
         <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => onNavigateToMap ? onNavigateToMap() : navigate('/map')} 
+          <button
+            onClick={() => onNavigateToMap ? onNavigateToMap() : navigate('/map')}
             className="btn-secondary"
             style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
           >
             <MapPin size={14} color="#10B981" />
             Solar Fleet Map
           </button>
-          <button 
-            onClick={() => navigate('/faults')} 
+          <button
+            onClick={() => navigate('/faults')}
             className="btn-secondary"
             style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
           >
             <AlertTriangle size={14} color="#F59E0B" />
             Reported Incidents
           </button>
-          <button 
-            onClick={() => navigate('/maintenance')} 
+          <button
+            onClick={() => navigate('/maintenance')}
             className="btn-secondary"
             style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
           >
             <Wrench size={14} color="#38BDF8" />
             Work Orders
           </button>
-          <button 
-            onClick={() => navigate('/analytics')} 
+          <button
+            onClick={() => navigate('/analytics')}
             className="btn-secondary"
             style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
           >
             <BarChart3 size={14} color="#A78BFA" />
             Analytics
-          </button>
-          <button 
-            onClick={() => navigate('/3d')} 
-            className="btn-secondary"
-            style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
-          >
-            <Sparkles size={14} color="#60A5FA" />
-            3D Grid
           </button>
           <button onClick={() => setShowModal(true)} className="btn-primary">
             <Plus size={16} />
@@ -412,7 +404,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   type="text" required
                   placeholder="e.g. Indiranagar Solar Residency"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                 />
               </div>
@@ -423,7 +415,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   <input
                     type="number" step="0.1" required
                     value={formData.capacity_kw}
-                    onChange={(e) => setFormData({...formData, capacity_kw: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, capacity_kw: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                   />
                 </div>
@@ -431,7 +423,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Type</label>
                   <select
                     value={formData.installation_type}
-                    onChange={(e) => setFormData({...formData, installation_type: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, installation_type: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                   >
                     <option value="rooftop_residential">Rooftop Residential</option>
@@ -448,7 +440,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   type="text" required
                   placeholder="e.g. 56 Lavelle Road"
                   value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                 />
               </div>
@@ -459,7 +451,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   <input
                     type="text" required
                     value={formData.city}
-                    onChange={(e) => setFormData({...formData, city: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                   />
                 </div>
@@ -468,7 +460,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   <input
                     type="text" required
                     value={formData.state}
-                    onChange={(e) => setFormData({...formData, state: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                   />
                 </div>
@@ -480,7 +472,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   <input
                     type="number" step="0.0001" required
                     value={formData.latitude}
-                    onChange={(e) => setFormData({...formData, latitude: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                   />
                 </div>
@@ -489,7 +481,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   <input
                     type="number" step="0.0001" required
                     value={formData.longitude}
-                    onChange={(e) => setFormData({...formData, longitude: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                   />
                 </div>
@@ -501,7 +493,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   <input
                     type="text"
                     value={formData.inverter_model}
-                    onChange={(e) => setFormData({...formData, inverter_model: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, inverter_model: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                   />
                 </div>
@@ -510,7 +502,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                   <input
                     type="text"
                     value={formData.panel_model}
-                    onChange={(e) => setFormData({...formData, panel_model: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, panel_model: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                   />
                 </div>

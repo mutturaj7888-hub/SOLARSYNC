@@ -632,16 +632,7 @@ export default function MapView({ onReportFault }) {
             style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem' }}
           >
             <Wrench size={13} color="#38BDF8" />
-            Dispatch
-          </button>
-          <button 
-            type="button" 
-            onClick={() => navigate('/3d')} 
-            className="btn-secondary"
-            style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem' }}
-          >
-            <Sparkles size={13} color="#60A5FA" />
-            3D Grid
+            {userRole === 'installation_owner' ? 'Track Repairs' : 'Dispatch'}
           </button>
         </div>
       </div>

@@ -16,16 +16,35 @@ export default function Header({ healthStatus, onRefreshHealth }) {
   const isMaintainer = userRole === 'technician' || userRole === 'maintainer';
   const isResident = userRole === 'installation_owner';
 
-  const navLinks = [
-    { path: '/dashboard', label: 'Console' },
-    { path: '/maintenance', label: 'Dispatch' },
-    { path: '/faults', label: 'Requests' },
-    { path: '/map', label: 'Map' },
-    { path: '/assets', label: 'Assets' },
-    { path: '/analytics', label: 'Analytics' },
-    { path: '/login', label: 'Auth' },
-    { path: '/3d', label: '3D Grid' },
-  ];
+  const getNavLinks = () => {
+    if (isResident) {
+      return [
+        { path: '/dashboard', label: 'Console' },
+        { path: '/faults', label: 'Report Issue' },
+        { path: '/maintenance', label: 'Track Repairs' },
+        { path: '/assets', label: 'My Solar Panels' },
+        { path: '/map', label: 'Solar Map' },
+      ];
+    }
+    if (isMaintainer) {
+      return [
+        { path: '/dashboard', label: 'Console' },
+        { path: '/maintenance', label: 'Work Orders' },
+        { path: '/faults', label: 'Faults' },
+        { path: '/map', label: 'Territory Map' },
+      ];
+    }
+    return [
+      { path: '/dashboard', label: 'Console' },
+      { path: '/maintenance', label: 'Dispatch & Assign' },
+      { path: '/faults', label: 'Incident Requests' },
+      { path: '/map', label: 'Geospatial Grid' },
+      { path: '/assets', label: 'Asset Fleet' },
+      { path: '/analytics', label: 'Analytics' },
+    ];
+  };
+
+  const navLinks = getNavLinks();
 
   return (
     <header className="top-navbar" style={{

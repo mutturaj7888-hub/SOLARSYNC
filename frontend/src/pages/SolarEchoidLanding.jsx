@@ -17,8 +17,7 @@ export default function SolarEchoidLanding() {
   const { login, register, isAuthenticated, currentUser } = useAuth();
 
   // Mode: '3d' or 'video'
-  const [backdropMode, setBackdropMode] = useState('3d');
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [backdropMode] = useState('3d');
 
   // Selected Role: 'distributor' | 'technician' | 'installation_owner'
   const [selectedRole, setSelectedRole] = useState('distributor');
@@ -28,27 +27,15 @@ export default function SolarEchoidLanding() {
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
 
-  const toggleBtnRef = useRef(null);
-  const mobileMenuRef = useRef(null);
-
   useEffect(() => {
     const prevTitle = document.title;
     document.title = 'SOLARSYNC — Smart Solar Asset & Maintenance Network';
     document.documentElement.lang = 'en';
 
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && menuOpen) {
-        setMenuOpen(false);
-        if (toggleBtnRef.current) toggleBtnRef.current.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.title = prevTitle;
-      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [menuOpen]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -127,102 +114,12 @@ export default function SolarEchoidLanding() {
           <a href="#" className="solar-hero__logo" onClick={() => navigate('/dashboard')}>
             SOLARSYNC
           </a>
-
-          <div className="solar-hero__nav-cluster">
-            {/* Desktop Navigation Links */}
-            <nav className="solar-hero__nav-links">
-              <button 
-                type="button" 
-                onClick={() => setBackdropMode(backdropMode === '3d' ? 'video' : '3d')} 
-                className="solar-hero__mode-switch"
-              >
-                [ VIEW: {backdropMode === '3d' ? '3D MATRIX' : 'CINEMATIC'} ]
-              </button>
-              <a href="/map" className="solar-hero__nav-link" onClick={(e) => { e.preventDefault(); navigate('/map'); }}>
-                Map
-              </a>
-              <a href="/faults" className="solar-hero__nav-link" onClick={(e) => { e.preventDefault(); navigate('/faults'); }}>
-                Requests
-              </a>
-              <a href="/maintenance" className="solar-hero__nav-link" onClick={(e) => { e.preventDefault(); navigate('/maintenance'); }}>
-                Dispatch
-              </a>
-            </nav>
-
-            {/* Desktop CTA */}
-            {isAuthenticated ? (
-              <a href="/dashboard" className="solar-hero__nav-cta" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }}>
-                CONSOLE ({currentUser?.role === 'distributor' ? 'DISTRIBUTOR' : currentUser?.role === 'technician' ? 'MAINTAINER' : 'RESIDENT'})
-              </a>
-            ) : (
-              <a href="/login" className="solar-hero__nav-cta" onClick={(e) => { e.preventDefault(); navigate('/login'); }}>
-                ENTER OS
-              </a>
-            )}
-
-            {/* Mobile Hamburger */}
-            <button
-              ref={toggleBtnRef}
-              className="solar-hero__menu-toggle"
-              type="button"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-expanded={menuOpen}
-              aria-controls="solarMobileMenu"
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            >
-              <span className="solar-hero__menu-bar solar-hero__menu-bar--1" />
-              <span className="solar-hero__menu-bar solar-hero__menu-bar--2" />
-              <span className="solar-hero__menu-bar solar-hero__menu-bar--3" />
-            </button>
-          </div>
         </header>
-
-        {/* Mobile Menu Overlay */}
-        <div
-          id="solarMobileMenu"
-          ref={mobileMenuRef}
-          className="solar-mobile-menu"
-          data-open={menuOpen ? 'true' : 'false'}
-          role="dialog"
-          aria-modal="true"
-          aria-label="SolarSync Menu"
-          aria-hidden={!menuOpen}
-          inert={!menuOpen ? '' : undefined}
-          onClick={(e) => {
-            if (e.target === mobileMenuRef.current) setMenuOpen(false);
-          }}
-        >
-          <a href="/dashboard" className="solar-mobile-menu__link" onClick={() => { setMenuOpen(false); navigate('/dashboard'); }}>
-            Console
-          </a>
-          <a href="/map" className="solar-mobile-menu__link" onClick={() => { setMenuOpen(false); navigate('/map'); }}>
-            Geospatial Map
-          </a>
-          <a href="/faults" className="solar-mobile-menu__link" onClick={() => { setMenuOpen(false); navigate('/faults'); }}>
-            Nearby Requests
-          </a>
-          <a href="/maintenance" className="solar-mobile-menu__link" onClick={() => { setMenuOpen(false); navigate('/maintenance'); }}>
-            Task Dispatch
-          </a>
-          <button
-            type="button"
-            className="solar-hero__mode-switch"
-            style={{ marginTop: '16px' }}
-            onClick={() => { setBackdropMode(backdropMode === '3d' ? 'video' : '3d'); setMenuOpen(false); }}
-          >
-            TOGGLE {backdropMode === '3d' ? 'VIDEO BACKDROP' : '3D HOLOGRAPHIC GRID'}
-          </button>
-        </div>
 
         {/* Row 2: Right-Aligned Voice Entry / Terminal Access Form Body */}
         <div className="solar-hero__body">
           <div className="solar-panel">
-            {/* 1) Chip */}
-            <div className="solar-panel__chip">
-              [ 3D SOLAR ASSET NETWORK ]
-            </div>
-
-            {/* 2) H1 */}
+            {/* 1) H1 */}
             <h1 className="solar-panel__h1">
               SOLARSYNC
             </h1>

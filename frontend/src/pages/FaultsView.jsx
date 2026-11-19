@@ -164,33 +164,27 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
             style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
           >
             <Wrench size={14} color="#38BDF8" />
-            Task Dispatch
+            {userRole === 'installation_owner' ? 'Track Repairs' : 'Task Dispatch'}
           </button>
-          <button 
-            onClick={() => navigate('/3d')} 
-            className="btn-secondary"
-            style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem' }}
-          >
-            <Sparkles size={14} color="#60A5FA" />
-            3D Grid
-          </button>
-          <button 
-            onClick={handleRepairAll}
-            disabled={repairingAll}
-            className="btn-primary" 
-            style={{ 
-              padding: '0.45rem 0.95rem', 
-              fontSize: '0.775rem',
-              background: '#ffffff',
-              color: '#000000',
-              border: 'none',
-              fontWeight: 600,
-              cursor: repairingAll ? 'not-allowed' : 'pointer'
-            }}
-          >
-            <CheckCircle2 size={15} color="#000000" />
-            {repairingAll ? 'REPAIRING ALL...' : 'REPAIR ALL FAULTS'}
-          </button>
+          {(userRole === 'distributor' || userRole === 'admin') && (
+            <button 
+              onClick={handleRepairAll}
+              disabled={repairingAll}
+              className="btn-primary" 
+              style={{ 
+                padding: '0.45rem 0.95rem', 
+                fontSize: '0.775rem',
+                background: '#ffffff',
+                color: '#000000',
+                border: 'none',
+                fontWeight: 600,
+                cursor: repairingAll ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <CheckCircle2 size={15} color="#000000" />
+              {repairingAll ? 'REPAIRING ALL...' : 'REPAIR ALL FAULTS'}
+            </button>
+          )}
           <button onClick={() => setShowModal(true)} className="btn-secondary" style={{ padding: '0.45rem 0.95rem', fontSize: '0.775rem' }}>
             <Plus size={16} />
             Report Problem Request
