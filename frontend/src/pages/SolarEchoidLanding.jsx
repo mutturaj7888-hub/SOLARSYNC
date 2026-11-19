@@ -162,7 +162,7 @@ export default function SolarEchoidLanding() {
               marginTop: '12px',
               fontFamily: 'var(--font-mono)',
               fontSize: '0.725rem',
-              color: selectedRole === 'distributor' ? '#60A5FA' : selectedRole === 'technician' ? '#34D399' : '#FBBF24',
+              color: selectedRole === 'distributor' ? '#EF4444' : selectedRole === 'technician' ? '#34D399' : '#FBBF24',
               letterSpacing: '0.08em',
               textTransform: 'uppercase'
             }}>
