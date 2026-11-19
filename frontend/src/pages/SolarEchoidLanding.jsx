@@ -60,18 +60,8 @@ export default function SolarEchoidLanding() {
       }
       navigate('/dashboard');
     } catch (err) {
-      // If login failed, try quick auto-register or show error
-      try {
-        await register({
-          name: username,
-          username: username,
-          password: password.trim() || 'solarsync123',
-          role: selectedRole
-        });
-        navigate('/dashboard');
-      } catch (regErr) {
-        setStatusMsg(err.response?.data?.detail || err.message || 'Authentication failed');
-      }
+      const errorDetail = err.response?.data?.detail || err.message || 'Authentication failed';
+      setStatusMsg(typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail));
     } finally {
       setLoading(false);
     }

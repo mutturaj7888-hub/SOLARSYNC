@@ -171,6 +171,13 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
         (func.lower(User.full_name) == identifier.lower())
     ).first()
 
+    # If user not found in either PostgreSQL or MongoDB, inform that user doesn't exist
+    if not user and not mongo_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User doesn't exist. Please register first."
+        )
+
     # Determine stored password hash
     hashed_pwd = None
     if mongo_user and "hashed_password" in mongo_user:
@@ -181,7 +188,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
     if not hashed_pwd or not verify_password(credentials.password, hashed_pwd):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect name/email or password",
+            detail="Incorrect password. Please try again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
