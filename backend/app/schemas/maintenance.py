@@ -27,6 +27,7 @@ class AssignmentOut(BaseModel):
     completed_at: Optional[datetime] = None
     technician_name: Optional[str] = None
     ticket_number: Optional[str] = None
+    fault_status: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -54,6 +54,7 @@ def get_assignments(
             out.technician_name = a.technician.full_name
         if a.fault_report:
             out.ticket_number = a.fault_report.ticket_number
+            out.fault_status = a.fault_report.status.value if hasattr(a.fault_report.status, 'value') else str(a.fault_report.status)
         results.append(out)
     return results
 
@@ -141,6 +142,7 @@ def assign_technician(
     out = AssignmentOut.model_validate(db_assign)
     out.technician_name = tech.full_name
     out.ticket_number = fault.ticket_number
+    out.fault_status = fault.status.value if hasattr(fault.status, 'value') else str(fault.status)
     return out
 
 
@@ -177,6 +179,7 @@ def update_assignment_progress(
         out.technician_name = assign.technician.full_name
     if fault:
         out.ticket_number = fault.ticket_number
+        out.fault_status = fault.status.value if hasattr(fault.status, 'value') else str(fault.status)
     return out
 
 

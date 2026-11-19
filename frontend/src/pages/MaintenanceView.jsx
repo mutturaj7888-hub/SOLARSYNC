@@ -168,11 +168,26 @@ export default function MaintenanceView({
       setWorkSummary('');
       setPartsReplaced('');
       loadData();
-      alert("Repair evidence submitted successfully! Resident has been notified to inspect and confirm.");
+      alert("Repair evidence submitted successfully! Distributor has been notified to verify and close ticket.");
     } catch (err) {
       alert("Error: " + (err.response?.data?.detail || err.message));
     } finally {
       setIsSubmittingEvidence(false);
+    }
+  };
+
+  // One-click Verify and Close for Distributor
+  const handleQuickVerifyAndClose = async (assign) => {
+    try {
+      setAssignments(prev => prev.map(a => 
+        a.id === assign.id ? { ...a, fault_status: 'verified_closed' } : a
+      ));
+      await verifyRepair(assign.fault_report_id, true, "Verified and closed by distributor.");
+      await loadData();
+      alert("Ticket verified and closed! Task Done.");
+    } catch (err) {
+      alert("Error: " + (err.response?.data?.detail || err.message));
+      await loadData();
     }
   };
 
@@ -207,7 +222,7 @@ export default function MaintenanceView({
       setShowVerifyModal(false);
       onClearVerifyTarget();
       loadData();
-      alert(approved ? "Repair APPROVED & Ticket Closed! Installation restored to Operational." : "Repair REJECTED & Reopened with feedback.");
+      alert(approved ? "Ticket verified and closed! Task Done." : "Repair REJECTED & Reopened with feedback.");
     } catch (err) {
       alert("Error: " + (err.response?.data?.detail || err.message));
     }
@@ -405,50 +420,80 @@ export default function MaintenanceView({
                       </div>
                     )}
 
-                    {assign.completed_at && (
+                    {assign.fault_status === 'verified_closed' ? (
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.4rem',
                         padding: '0.45rem 0.85rem',
                         borderRadius: 'var(--radius-md)',
-                        background: 'rgba(16, 185, 129, 0.1)',
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
                         color: 'var(--emerald-400)',
                         fontSize: '0.8rem',
-                        fontWeight: 600
+                        fontWeight: 700
                       }}>
                         <CheckCircle2 size={16} />
-                        Repair Solved (Evidence Submitted)
+                        Task Done
                       </div>
-                    )}
+                    ) : assign.completed_at ? (
+                      <>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: 'var(--radius-md)',
+                          background: 'rgba(16, 185, 129, 0.1)',
+                          color: 'var(--emerald-400)',
+                          fontSize: '0.8rem',
+                          fontWeight: 600
+                        }}>
+                          <CheckCircle2 size={16} />
+                          Repair Solved (Evidence Submitted)
+                        </div>
 
-                    {assign.completed_at && (userRole === 'distributor' || userRole === 'admin') && (
-                      <button
-                        onClick={async () => {
-                          const evidenceList = await getFaultEvidence(assign.fault_report_id).catch(() => []);
-                          if (evidenceList && evidenceList.length > 0) {
-                            setEvidenceToReview({
-                              ...evidenceList[0],
-                              fault: { id: assign.fault_report_id, ticket_number: assign.ticket_number }
-                            });
-                          } else {
-                            setEvidenceToReview({
-                              id: assign.fault_report_id,
-                              fault: { id: assign.fault_report_id, ticket_number: assign.ticket_number },
-                              before_photo_url: "https://images.unsplash.com/photo-1508873696983-2df5293cb32f?w=600&auto=format&fit=crop&q=80",
-                              after_photo_url: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80",
-                              work_summary: assign.dispatch_notes || "Field maintenance completed and inspected on site."
-                            });
-                          }
-                          setShowVerifyModal(true);
-                        }}
-                        className="btn-primary"
-                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem', background: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' }}
-                      >
-                        <ShieldCheck size={14} />
-                        Verify & Close Ticket
-                      </button>
-                    )}
+                        {(userRole === 'distributor' || userRole === 'admin') && (
+                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <button
+                              onClick={() => handleQuickVerifyAndClose(assign)}
+                              className="btn-primary"
+                              style={{ padding: '0.45rem 0.85rem', fontSize: '0.775rem', background: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' }}
+                              title="Verify and close ticket immediately"
+                            >
+                              <ShieldCheck size={14} />
+                              Verify & Close Ticket
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const evidenceList = await getFaultEvidence(assign.fault_report_id).catch(() => []);
+                                if (evidenceList && evidenceList.length > 0) {
+                                  setEvidenceToReview({
+                                    ...evidenceList[0],
+                                    fault: { id: assign.fault_report_id, ticket_number: assign.ticket_number }
+                                  });
+                                } else {
+                                  setEvidenceToReview({
+                                    id: assign.fault_report_id,
+                                    fault: { id: assign.fault_report_id, ticket_number: assign.ticket_number },
+                                    before_photo_url: "https://images.unsplash.com/photo-1508873696983-2df5293cb32f?w=600&auto=format&fit=crop&q=80",
+                                    after_photo_url: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80",
+                                    work_summary: assign.dispatch_notes || "Field maintenance completed and inspected on site."
+                                  });
+                                }
+                                setShowVerifyModal(true);
+                              }}
+                              className="btn-secondary"
+                              style={{ padding: '0.45rem 0.75rem', fontSize: '0.775rem' }}
+                              title="Inspect before/after evidence photos"
+                            >
+                              <Camera size={13} />
+                              Inspect Photos
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : null}
                   </div>
                 </div>
               ))}

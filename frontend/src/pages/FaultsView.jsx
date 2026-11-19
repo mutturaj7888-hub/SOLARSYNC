@@ -19,7 +19,7 @@ import {
   Sparkles, 
   Calendar 
 } from 'lucide-react';
-import { getFaults, createFault, uploadFaultPhoto, getInstallations, repairAllFaults, updateFaultStatus, confirmRepairByResident } from '../services/api';
+import { getFaults, createFault, uploadFaultPhoto, getInstallations, repairAllFaults, updateFaultStatus } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initialInstallationId = null }) {
@@ -56,22 +56,24 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
     }
   };
 
+  const handleQuickVerifyAndCloseFault = async (faultId) => {
+    try {
+      setFaults(prev => prev.map(f => f.id === faultId ? { ...f, status: 'verified_closed' } : f));
+      await updateFaultStatus(faultId, 'verified_closed');
+      await loadData();
+      alert("Ticket verified and closed! Task Done.");
+    } catch (err) {
+      alert("Error: " + (err.response?.data?.detail || err.message));
+      await loadData();
+    }
+  };
+
   const handleQuickRepairSingle = async (faultId) => {
     try {
       await updateFaultStatus(faultId, 'verified_closed');
       await loadData();
     } catch (err) {
       alert("Error repairing fault: " + (err.response?.data?.detail || err.message));
-    }
-  };
-
-  const handleConfirmByResident = async (faultId) => {
-    try {
-      await confirmRepairByResident(faultId);
-      await loadData();
-      alert("Confirmation sent to Distributor! The distributor can now verify and close the ticket.");
-    } catch (err) {
-      alert("Error confirming repair: " + (err.response?.data?.detail || err.message));
     }
   };
 
@@ -398,41 +400,56 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
                     color: isResolved ? 'var(--emerald-400)' : (f.status === 'resolved_pending_verification' || f.status === 'resident_confirmed') ? 'var(--sky-400)' : 'var(--amber-400)',
                     fontFamily: 'var(--font-mono)'
                   }}>
-                    {f.status === 'resolved_pending_verification' 
-                      ? (userRole === 'installation_owner' ? 'ISSUE SOLVED (CONFIRMATION NEEDED)' : 'ISSUE SOLVED (AWAITING RESIDENT CONFIRMATION)')
-                      : f.status === 'resident_confirmed'
-                      ? (userRole === 'distributor' || userRole === 'admin' ? 'RESIDENT CONFIRMED — READY TO CLOSE' : 'CONFIRMED — AWAITING DISTRIBUTOR FINAL CLOSE')
+                    {isResolved ? 'TASK DONE' : (f.status === 'resolved_pending_verification' || f.status === 'resident_confirmed') 
+                      ? (userRole === 'installation_owner' ? 'ISSUE SOLVED (REPAIR COMPLETED)' : 'ISSUE SOLVED (AWAITING DISTRIBUTOR VERIFICATION)')
                       : f.status.replace(/_/g, ' ').toUpperCase()}
                   </span>
 
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    {/* Resident Confirms Solution to Distributor */}
-                    {f.status === 'resolved_pending_verification' && userRole === 'installation_owner' && (
-                      <button
-                        onClick={() => handleConfirmByResident(f.id)}
-                        className="btn-primary"
-                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' }}
-                        title="Confirm that the maintainer solved the issue and send to distributor to close"
-                      >
-                        <CheckCircle2 size={13} />
-                        Confirm Repair to Distributor
-                      </button>
+                    {/* Task Done indicator when verified & closed */}
+                    {isResolved && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        color: 'var(--emerald-400)',
+                        fontSize: '0.775rem',
+                        fontWeight: 700
+                      }}>
+                        <CheckCircle2 size={14} />
+                        Task Done
+                      </div>
                     )}
 
-                    {/* Distributor or Admin Closes / Reviews Evidence */}
+                    {/* Distributor or Admin: One-click Verify & Close */}
                     {(f.status === 'resolved_pending_verification' || f.status === 'resident_confirmed') && (userRole === 'distributor' || userRole === 'admin') && (
-                      <button
-                        onClick={() => onOpenVerifyModal && onOpenVerifyModal(f)}
-                        className="btn-primary"
-                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.775rem', background: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' }}
-                        title="Review maintainer repair evidence and close ticket"
-                      >
-                        <ShieldCheck size={13} />
-                        {f.status === 'resident_confirmed' ? 'Verify & Close Issue' : 'Review Evidence & Close'}
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleQuickVerifyAndCloseFault(f.id)}
+                          className="btn-primary"
+                          style={{ padding: '0.4rem 0.85rem', fontSize: '0.775rem', background: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' }}
+                          title="Click once to verify and close ticket"
+                        >
+                          <ShieldCheck size={13} />
+                          Verify & Close Ticket
+                        </button>
+                        <button
+                          onClick={() => onOpenVerifyModal && onOpenVerifyModal(f)}
+                          className="btn-secondary"
+                          style={{ padding: '0.4rem 0.75rem', fontSize: '0.72rem' }}
+                          title="Review maintainer repair evidence photos"
+                        >
+                          <Camera size={13} />
+                          Inspect Photos
+                        </button>
+                      </>
                     )}
 
-                    {!isResolved && (userRole === 'distributor' || userRole === 'admin') && (
+                    {!isResolved && f.status !== 'resolved_pending_verification' && (userRole === 'distributor' || userRole === 'admin') && (
                       <button
                         onClick={() => handleQuickRepairSingle(f.id)}
                         className="btn-secondary"
