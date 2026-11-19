@@ -22,7 +22,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function AssetsView({ onNavigateToMap, onReportFault }) {
   const navigate = useNavigate();
-  const { userRole } = useAuth();
+  const { userRole, currentUser } = useAuth();
   const [installations, setInstallations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -174,8 +174,14 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
     }
   };
 
-  // Filtered items
-  const filtered = installations.filter((inst) => {
+  const isResident = userRole === 'installation_owner';
+
+  // Filtered items: for residents, strictly retain only resident registered data
+  const userInstallations = (isResident && currentUser?.id)
+    ? installations.filter(inst => inst.owner_id === currentUser.id)
+    : installations;
+
+  const filtered = userInstallations.filter((inst) => {
     const matchesSearch = inst.name.toLowerCase().includes(search.toLowerCase()) ||
       inst.city.toLowerCase().includes(search.toLowerCase());
     const matchesType = typeFilter === 'all' || inst.installation_type === typeFilter;
@@ -189,10 +195,12 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            Solar Asset Inventory
+            {isResident ? 'My Solar Panels' : 'Solar Asset Inventory'}
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            Centralized registry of rooftop solar arrays, inverter telemetry, and technical equipment specs.
+            {isResident 
+              ? 'Your registered rooftop solar systems, inverter telemetry, and technical equipment specs.'
+              : 'Centralized registry of rooftop solar arrays, inverter telemetry, and technical equipment specs.'}
           </p>
         </div>
 
@@ -231,7 +239,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
           </button>
           <button onClick={() => setShowModal(true)} className="btn-primary">
             <Plus size={16} />
-            Register Solar Asset
+            {isResident ? 'Register Rooftop Solar' : 'Register Solar Asset'}
           </button>
         </div>
       </div>
@@ -316,7 +324,9 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
         </div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)' }}>
-          No solar installations match the current filters.
+          {isResident 
+            ? "You haven't registered any solar panels yet. Click '+ Register Rooftop Solar' above to add your system."
+            : "No solar installations match the current filters."}
         </div>
       ) : (
         <div style={{

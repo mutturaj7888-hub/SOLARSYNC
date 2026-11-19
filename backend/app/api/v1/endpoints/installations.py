@@ -26,16 +26,22 @@ def get_installations(
     owner_id: Optional[int] = None,
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """Retrieve registered installations with optional filters."""
+    """Retrieve registered installations. Residents strictly see only their own registered solar panels."""
     query = db.query(SolarInstallation)
+    
+    # Restrict resident access to only their own registered solar panels
+    if current_user.role == UserRole.INSTALLATION_OWNER:
+        query = query.filter(SolarInstallation.owner_id == current_user.id)
+    elif owner_id:
+        query = query.filter(SolarInstallation.owner_id == owner_id)
+
     if city:
         query = query.filter(SolarInstallation.city.ilike(f"%{city}%"))
     if status and status != "all":
         query = query.filter(SolarInstallation.operational_status == status)
-    if owner_id:
-        query = query.filter(SolarInstallation.owner_id == owner_id)
     
     installations = query.offset(skip).limit(limit).all()
     return installations
