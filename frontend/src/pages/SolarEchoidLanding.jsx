@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { createInstallation } from '../services/api';
+import MapLocationPicker from '../components/MapLocationPicker';
 import Solar3DCanvas from '../components/3d/Solar3DCanvas';
 import './SolarEchoidLanding.css';
 
@@ -26,6 +28,31 @@ export default function SolarEchoidLanding() {
   const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
+
+  // Resident rooftop location selection mode (Current vs Choose on Map)
+  const [residentLocationMode, setResidentLocationMode] = useState('current'); // 'current' | 'map'
+  const [residentLat, setResidentLat] = useState(12.9716);
+  const [residentLng, setResidentLng] = useState(77.5946);
+  const [residentCity, setResidentCity] = useState('Bengaluru');
+
+  const autoDetectResidentLocation = () => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setResidentLat(parseFloat(pos.coords.latitude.toFixed(4)));
+          setResidentLng(parseFloat(pos.coords.longitude.toFixed(4)));
+        },
+        () => {},
+        { timeout: 8000 }
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (isRegister && selectedRole === 'installation_owner') {
+      autoDetectResidentLocation();
+    }
+  }, [isRegister, selectedRole]);
 
   useEffect(() => {
     const prevTitle = document.title;
@@ -55,6 +82,29 @@ export default function SolarEchoidLanding() {
           password: pwd,
           role: selectedRole
         });
+
+        // If registering as a new resident, register their rooftop solar installation with chosen location
+        if (selectedRole === 'installation_owner') {
+          try {
+            await createInstallation({
+              name: `${username}'s Rooftop Solar`,
+              address: `${residentCity} Rooftop System`,
+              city: residentCity,
+              state: 'Karnataka',
+              postal_code: '560001',
+              latitude: residentLat,
+              longitude: residentLng,
+              capacity_kw: 15.0,
+              installation_type: 'rooftop_residential',
+              inverter_mfr: 'Sungrow',
+              inverter_model: 'SG50CX 50kW',
+              panel_mfr: 'Canadian Solar',
+              panel_model: 'HiKu6 540W Mono'
+            });
+          } catch (e) {
+            console.warn("Auto-register rooftop asset on sign-up:", e);
+          }
+        }
       } else {
         await login(username, pwd);
       }
@@ -202,6 +252,101 @@ export default function SolarEchoidLanding() {
                   autoComplete="current-password"
                 />
               </div>
+
+              {/* While registering for a new resident: Ask current location or choose on map */}
+              {isRegister && selectedRole === 'installation_owner' && (
+                <div style={{
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.45rem',
+                  padding: '10px',
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '4px',
+                  boxSizing: 'border-box'
+                }}>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.675rem',
+                    color: '#10B981',
+                    textAlign: 'left',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    fontWeight: 700
+                  }}>
+                    Rooftop Location: Is installation at your current location?
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResidentLocationMode('current');
+                        autoDetectResidentLocation();
+                      }}
+                      style={{
+                        padding: '6px 8px',
+                        background: residentLocationMode === 'current' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid',
+                        borderColor: residentLocationMode === 'current' ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
+                        color: residentLocationMode === 'current' ? '#10B981' : '#AAA',
+                        fontSize: '0.7rem',
+                        fontFamily: 'var(--font-mono)',
+                        cursor: 'pointer',
+                        borderRadius: '3px'
+                      }}
+                    >
+                      ● Current Location
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setResidentLocationMode('map')}
+                      style={{
+                        padding: '6px 8px',
+                        background: residentLocationMode === 'map' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid',
+                        borderColor: residentLocationMode === 'map' ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
+                        color: residentLocationMode === 'map' ? '#10B981' : '#AAA',
+                        fontSize: '0.7rem',
+                        fontFamily: 'var(--font-mono)',
+                        cursor: 'pointer',
+                        borderRadius: '3px'
+                      }}
+                    >
+                      🗺️ Choose on Map
+                    </button>
+                  </div>
+
+                  {residentLocationMode === 'map' ? (
+                    <div style={{ marginTop: '4px' }}>
+                      <MapLocationPicker
+                        initialLat={residentLat}
+                        initialLng={residentLng}
+                        height="200px"
+                        onLocationSelect={(lat, lng, cityName) => {
+                          setResidentLat(lat);
+                          setResidentLng(lng);
+                          if (cityName) setResidentCity(cityName);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{
+                      fontSize: '0.675rem',
+                      fontFamily: 'var(--font-mono)',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      padding: '6px 10px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      textAlign: 'left',
+                      borderRadius: '3px'
+                    }}>
+                      📍 GPS: {residentLat}° N, {residentLng}° E ({residentCity})
+                    </div>
+                  )}
+                </div>
+              )}
 
               <button
                 type="submit"

@@ -15,10 +15,12 @@ import {
   Layers,
   X,
   Sparkles,
-  BarChart3
+  BarChart3,
+  Navigation
 } from 'lucide-react';
 import { getInstallations, createInstallation, deleteInstallation } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import MapLocationPicker from '../components/MapLocationPicker';
 
 export default function AssetsView({ onNavigateToMap, onReportFault }) {
   const navigate = useNavigate();
@@ -30,6 +32,7 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [detectingGps, setDetectingGps] = useState(false);
+  const [locationMode, setLocationMode] = useState('current'); // 'current' | 'map'
 
   const CITY_COORDINATES = {
     'bengaluru': { lat: 12.9716, lng: 77.5946 },
@@ -538,39 +541,122 @@ export default function AssetsView({ onNavigateToMap, onReportFault }) {
                 </div>
               </div>
 
-              {/* Auto-detected GPS Coordinates (No manual lat/long entry) */}
-              <div style={{
-                padding: '0.75rem 1rem',
-                borderRadius: 'var(--radius-md)',
-                background: 'rgba(16, 185, 129, 0.08)',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '0.5rem'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <MapPin size={16} color="var(--emerald-400)" />
-                  <div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--emerald-400)' }}>
-                      Rooftop Location (Auto-detected GPS)
-                    </div>
-                    <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      {formData.latitude}° N, {formData.longitude}° E ({formData.city})
-                    </div>
-                  </div>
+              {/* Location Selection: Ask user Current Location or Choose on Map */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ fontSize: '0.775rem', color: 'var(--text-main)', display: 'block', fontWeight: 700 }}>
+                  Solar Rooftop Location: Is the installation at your current location?
+                </label>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocationMode('current');
+                      autoDetectLocation();
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1.5px solid',
+                      borderColor: locationMode === 'current' ? 'var(--emerald-400)' : 'var(--border-subtle)',
+                      background: locationMode === 'current' ? 'rgba(16, 185, 129, 0.15)' : '#1F2937',
+                      color: locationMode === 'current' ? 'var(--emerald-400)' : 'var(--text-secondary)',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <Navigation size={15} />
+                    Yes, Current Location
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLocationMode('map')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1.5px solid',
+                      borderColor: locationMode === 'map' ? 'var(--emerald-400)' : 'var(--border-subtle)',
+                      background: locationMode === 'map' ? 'rgba(16, 185, 129, 0.15)' : '#1F2937',
+                      color: locationMode === 'map' ? 'var(--emerald-400)' : 'var(--text-secondary)',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <MapPin size={15} />
+                    No, Choose on Map
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={autoDetectLocation}
-                  className="btn-secondary"
-                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.725rem' }}
-                  title="Fetch current device GPS location"
-                >
-                  <Sparkles size={12} color="#10B981" />
-                  {detectingGps ? "Detecting GPS..." : "Refresh GPS"}
-                </button>
+
+                {locationMode === 'current' ? (
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <MapPin size={16} color="var(--emerald-400)" />
+                      <div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--emerald-400)' }}>
+                          Using Current Device GPS Location
+                        </div>
+                        <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+                          {formData.latitude}° N, {formData.longitude}° E ({formData.city})
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={autoDetectLocation}
+                      className="btn-secondary"
+                      style={{ padding: '0.3rem 0.6rem', fontSize: '0.725rem' }}
+                      title="Fetch current device GPS location"
+                    >
+                      <Sparkles size={12} color="#10B981" />
+                      {detectingGps ? "Detecting GPS..." : "Refresh GPS"}
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '0.75rem',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid var(--border-subtle)',
+                    marginTop: '0.25rem'
+                  }}>
+                    <MapLocationPicker
+                      initialLat={formData.latitude}
+                      initialLng={formData.longitude}
+                      height="240px"
+                      onLocationSelect={(lat, lng, cityName) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          latitude: lat,
+                          longitude: lng,
+                          ...(cityName ? { city: cityName } : {})
+                        }));
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
