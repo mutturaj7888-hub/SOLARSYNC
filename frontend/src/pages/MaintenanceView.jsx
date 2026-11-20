@@ -60,6 +60,8 @@ export default function MaintenanceView({
   const [activeAssignment, setActiveAssignment] = useState(null);
   const [beforePhoto, setBeforePhoto] = useState('');
   const [afterPhoto, setAfterPhoto] = useState('');
+  const [uploadingBefore, setUploadingBefore] = useState(false);
+  const [uploadingAfter, setUploadingAfter] = useState(false);
   const [workSummary, setWorkSummary] = useState('');
   const [partsReplaced, setPartsReplaced] = useState('');
   const [hoursSpent, setHoursSpent] = useState(2);
@@ -145,19 +147,55 @@ export default function MaintenanceView({
   // Open Evidence Submission modal
   const handleOpenEvidence = (assign) => {
     setActiveAssignment(assign);
+    setBeforePhoto('');
+    setAfterPhoto('');
+    setWorkSummary('');
+    setPartsReplaced('');
     setShowEvidenceModal(true);
+  };
+
+  const handleUploadBeforePhoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBefore(true);
+    try {
+      const res = await uploadFaultPhoto(file);
+      setBeforePhoto(res.url);
+    } catch (err) {
+      alert("Before-repair photo upload failed: " + (err.response?.data?.detail || err.message));
+    } finally {
+      setUploadingBefore(false);
+    }
+  };
+
+  const handleUploadAfterPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAfter(true);
+    try {
+      const res = await uploadFaultPhoto(file);
+      setAfterPhoto(res.url);
+    } catch (err) {
+      alert("After-repair photo upload failed: " + (err.response?.data?.detail || err.message));
+    } finally {
+      setUploadingAfter(false);
+    }
   };
 
   // Submit Evidence (Single submission only)
   const handleSubmitEvidence = async (e) => {
     e.preventDefault();
     if (!activeAssignment || isSubmittingEvidence) return;
+    if (!afterPhoto) {
+      alert("Please upload an After-Repair photo from your device as proof of completed work.");
+      return;
+    }
     setIsSubmittingEvidence(true);
     try {
       await submitRepairEvidence({
         fault_report_id: activeAssignment.fault_report_id,
         before_photo_url: beforePhoto || "https://images.unsplash.com/photo-1508873696983-2df5293cb32f?w=600&auto=format&fit=crop&q=80",
-        after_photo_url: afterPhoto || "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80",
+        after_photo_url: afterPhoto,
         work_summary: workSummary,
         parts_replaced: partsReplaced,
         repair_duration_hours: parseInt(hoursSpent) || 2
@@ -704,27 +742,82 @@ export default function MaintenanceView({
                 </div>
               </div>
 
-              {/* Side by side Before/After photo placeholders */}
+              {/* Side by side Before/After photo device upload */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Before Repair Photo</label>
-                  <input
-                    type="text"
-                    placeholder="URL or Upload"
-                    value={beforePhoto}
-                    onChange={(e) => setBeforePhoto(e.target.value)}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF', fontSize: '0.8rem' }}
-                  />
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem', fontWeight: 600 }}>
+                    Before Repair Photo (Optional)
+                  </label>
+                  <div style={{
+                    border: beforePhoto ? '2px solid rgba(244, 63, 94, 0.4)' : '2px dashed var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.85rem',
+                    textAlign: 'center',
+                    background: beforePhoto ? 'rgba(244, 63, 94, 0.05)' : 'rgba(255, 255, 255, 0.02)',
+                    transition: 'border-color 0.2s'
+                  }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUploadBeforePhoto}
+                      style={{ display: 'none' }}
+                      id="evidence-before-photo"
+                    />
+                    <label htmlFor="evidence-before-photo" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                      {beforePhoto ? (
+                        <div style={{ width: '100%', height: '110px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: '0.25rem' }}>
+                          <img src={beforePhoto} alt="Before repair preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      ) : (
+                        <Camera size={26} color="var(--rose-400)" />
+                      )}
+                      <span style={{ fontSize: '0.75rem', color: beforePhoto ? 'var(--rose-400)' : 'var(--text-main)', fontWeight: 600 }}>
+                        {uploadingBefore 
+                          ? "Uploading image..." 
+                          : beforePhoto 
+                          ? "Before Photo Attached ✓ (Click to change)" 
+                          : "Upload from device (JPG, PNG, WebP)"}
+                      </span>
+                    </label>
+                  </div>
                 </div>
+
                 <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>After Repair Photo *</label>
-                  <input
-                    type="text" required
-                    placeholder="URL or Upload"
-                    value={afterPhoto}
-                    onChange={(e) => setAfterPhoto(e.target.value)}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF', fontSize: '0.8rem' }}
-                  />
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem', fontWeight: 600 }}>
+                    After Repair Photo * (Required)
+                  </label>
+                  <div style={{
+                    border: afterPhoto ? '2px solid rgba(16, 185, 129, 0.4)' : '2px dashed var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.85rem',
+                    textAlign: 'center',
+                    background: afterPhoto ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255, 255, 255, 0.02)',
+                    transition: 'border-color 0.2s'
+                  }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUploadAfterPhoto}
+                      style={{ display: 'none' }}
+                      id="evidence-after-photo"
+                    />
+                    <label htmlFor="evidence-after-photo" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                      {afterPhoto ? (
+                        <div style={{ width: '100%', height: '110px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: '0.25rem' }}>
+                          <img src={afterPhoto} alt="After repair preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      ) : (
+                        <Camera size={26} color="var(--emerald-400)" />
+                      )}
+                      <span style={{ fontSize: '0.75rem', color: afterPhoto ? 'var(--emerald-400)' : 'var(--text-main)', fontWeight: 600 }}>
+                        {uploadingAfter 
+                          ? "Uploading image..." 
+                          : afterPhoto 
+                          ? "After Photo Attached ✓ (Click to change)" 
+                          : "Upload from device (JPG, PNG, WebP)"}
+                      </span>
+                    </label>
+                  </div>
                 </div>
               </div>
 
