@@ -53,10 +53,12 @@ class FaultReport(Base):
     # Foreign Keys
     installation_id = Column(Integer, ForeignKey("solar_installations.id", ondelete="CASCADE"), nullable=False)
     reported_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    distributor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # Relationships
     installation = relationship("SolarInstallation", back_populates="fault_reports")
-    reported_by = relationship("User", back_populates="fault_reports")
+    reported_by = relationship("User", foreign_keys=[reported_by_id], back_populates="fault_reports")
+    distributor = relationship("User", foreign_keys=[distributor_id])
     assignment = relationship("MaintenanceAssignment", back_populates="fault_report", uselist=False, cascade="all, delete-orphan")
     evidence = relationship("RepairEvidence", back_populates="fault_report", cascade="all, delete-orphan")
 

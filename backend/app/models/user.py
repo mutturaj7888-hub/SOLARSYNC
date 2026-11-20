@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, Text, Float
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -26,6 +26,12 @@ class User(Base):
     is_verified = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    # Location columns for distributors, maintainers, and residents
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    city = Column(String(100), nullable=True)
+    address = Column(String(255), nullable=True)
 
     # Relationships
     installations = relationship("SolarInstallation", back_populates="owner", cascade="all, delete-orphan")

@@ -30,7 +30,17 @@ REQUEST_LATENCY = Histogram(
 async def lifespan(app: FastAPI):
     # Startup: Create tables if not exist and seed initial demo data
     try:
+        from sqlalchemy import text
         Base.metadata.create_all(bind=engine)
+        # Ensure location and distributor columns exist on existing databases
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;"))
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;"))
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(100);"))
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS address VARCHAR(255);"))
+            conn.execute(text("ALTER TABLE fault_reports ADD COLUMN IF NOT EXISTS distributor_id INTEGER;"))
+            conn.commit()
+
         db = SessionLocal()
         try:
             seed_database(db)

@@ -19,7 +19,7 @@ import {
   Sparkles, 
   Calendar 
 } from 'lucide-react';
-import { getFaults, createFault, uploadFaultPhoto, getInstallations, repairAllFaults, updateFaultStatus } from '../services/api';
+import { getFaults, createFault, uploadFaultPhoto, getInstallations, repairAllFaults, updateFaultStatus, getDistributors } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initialInstallationId = null }) {
@@ -42,6 +42,25 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
   const [photoUrl, setPhotoUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [repairingAll, setRepairingAll] = useState(false);
+  const [distributors, setDistributors] = useState([]);
+  const [selectedDistributorId, setSelectedDistributorId] = useState('');
+
+  const fetchNearbyDistributors = async (instId) => {
+    try {
+      const targetInst = installations.find(i => i.id === parseInt(instId));
+      const dists = await getDistributors({
+        lat: targetInst?.latitude,
+        lng: targetInst?.longitude,
+        installation_id: instId ? parseInt(instId) : undefined
+      }).catch(() => []);
+      setDistributors(dists);
+      if (dists.length > 0 && (!selectedDistributorId || !dists.some(d => d.id === parseInt(selectedDistributorId)))) {
+        setSelectedDistributorId(dists[0].id);
+      }
+    } catch (e) {
+      console.warn("Error fetching distributors:", e);
+    }
+  };
 
   const handleRepairAll = async () => {
     setRepairingAll(true);
@@ -110,6 +129,12 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (formInstId) {
+      fetchNearbyDistributors(formInstId);
+    }
+  }, [formInstId, installations]);
+
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -137,6 +162,7 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
         description,
         category,
         severity,
+        distributor_id: selectedDistributorId ? parseInt(selectedDistributorId) : null,
         photo_url: photoUrl || "https://images.unsplash.com/photo-1508873696983-2df5293cb32f?w=600&auto=format&fit=crop&q=80"
       });
       setShowModal(false);
@@ -384,8 +410,9 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', lineClamp: 2 }}>
                     {f.description}
                   </p>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Site: <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{f.installation_name || `Site #${f.installation_id}`}</span>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <span>Site: <strong style={{ color: 'var(--text-main)' }}>{f.installation_name || `Site #${f.installation_id}`}</strong></span>
+                    {f.distributor_name && <span>Distributor: <strong style={{ color: 'var(--sky-400)' }}>{f.distributor_name}</strong></span>}
                   </div>
                 </div>
 
@@ -554,6 +581,25 @@ export default function FaultsView({ onOpenAssignModal, onOpenVerifyModal, initi
                       </option>
                     ))}
                   </select>
+
+                  {distributors.length > 0 && (
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
+                        Choose Assigned Distributor (Sorted by Nearest to Your Rooftop)
+                      </label>
+                      <select
+                        value={selectedDistributorId}
+                        onChange={(e) => setSelectedDistributorId(e.target.value)}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
+                      >
+                        {distributors.map((d, idx) => (
+                          <option key={d.id} value={d.id}>
+                            {d.full_name} ({d.city || 'Regional Hub'}) {d.distance_km != null ? `• ${d.distance_km} km away ${idx === 0 ? '(Nearest ★)' : ''}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
 

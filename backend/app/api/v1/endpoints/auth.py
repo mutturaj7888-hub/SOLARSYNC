@@ -1,6 +1,7 @@
 import re
+import math
 from datetime import timedelta, datetime, timezone
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -19,8 +20,18 @@ from app.core.mongodb import (
     MONGODB_DB_NAME
 )
 from app.models.user import User, UserRole
+from app.models.fault import FaultReport
 from app.schemas.user import UserCreate, UserLogin, UserOut, Token
 from app.api.deps import get_current_user
+
+def calculate_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Haversine formula to compute great circle distance in kilometers."""
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2.0) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2.0) ** 2
+    c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+    return round(R * c, 2)
 
 router = APIRouter()
 
@@ -106,13 +117,17 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     assigned_role = user_in.role or UserRole.INSTALLATION_OWNER
     role_val = assigned_role.value if hasattr(assigned_role, 'value') else str(assigned_role)
 
-    # 1. Save user in SQL database
+    # 1. Save user in SQL database with location data
     user = User(
         email=email_clean,
         hashed_password=hashed_pwd,
         full_name=display_name,
         phone_number=user_in.phone_number or "+91 98450 12345",
         role=assigned_role,
+        latitude=user_in.latitude,
+        longitude=user_in.longitude,
+        city=user_in.city,
+        address=user_in.address,
         is_active=True,
         is_verified=True
     )
@@ -129,6 +144,10 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
         "full_name": display_name,
         "phone_number": user.phone_number,
         "role": role_val,
+        "latitude": user_in.latitude,
+        "longitude": user_in.longitude,
+        "city": user_in.city,
+        "address": user_in.address,
         "is_active": True,
         "is_verified": True,
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -252,12 +271,83 @@ def read_current_user(current_user: User = Depends(get_current_user)):
 
 @router.get("/technicians", response_model=List[UserOut], summary="List Field Technicians")
 def list_technicians(
+    fault_id: Optional[int] = None,
+    lat: Optional[float] = None,
+    lng: Optional[float] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Returns list of technicians for maintenance job assignments."""
+    """
+    Returns list of maintainers / technicians for maintenance job assignments.
+    If fault_id (or lat/lng) is provided, calculates distance to the resident's solar installation
+    so the distributor can choose the nearest maintainer to the resident for repair.
+    """
     technicians = db.query(User).filter(
         User.role.in_([UserRole.TECHNICIAN, UserRole.MAINTAINER]),
         User.is_active == True
     ).all()
-    return technicians
+
+    ref_lat = lat
+    ref_lng = lng
+
+    if fault_id and (ref_lat is None or ref_lng is None):
+        fault = db.query(FaultReport).filter(FaultReport.id == fault_id).first()
+        if fault and fault.installation:
+            ref_lat = fault.installation.latitude
+            ref_lng = fault.installation.longitude
+
+    results = []
+    for t in technicians:
+        out = UserOut.model_validate(t)
+        if ref_lat is not None and ref_lng is not None and t.latitude is not None and t.longitude is not None:
+            out.distance_km = calculate_distance_km(ref_lat, ref_lng, t.latitude, t.longitude)
+        else:
+            out.distance_km = None
+        results.append(out)
+
+    results.sort(key=lambda x: (x.distance_km is None, x.distance_km or 999999))
+    return results
+
+
+@router.get("/distributors", response_model=List[UserOut], summary="List Certified Solar Distributors")
+def list_distributors(
+    lat: Optional[float] = None,
+    lng: Optional[float] = None,
+    installation_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns list of certified distributors.
+    If lat and lng (or installation_id) are provided, computes distance so the resident can choose their nearest distributor.
+    """
+    distributors = db.query(User).filter(
+        User.role.in_([UserRole.DISTRIBUTOR, UserRole.ADMIN]),
+        User.is_active == True
+    ).all()
+
+    ref_lat = lat
+    ref_lng = lng
+
+    if installation_id and (ref_lat is None or ref_lng is None):
+        from app.models.installation import SolarInstallation
+        inst = db.query(SolarInstallation).filter(SolarInstallation.id == installation_id).first()
+        if inst:
+            ref_lat = inst.latitude
+            ref_lng = inst.longitude
+
+    if ref_lat is None and ref_lng is None and current_user.latitude and current_user.longitude:
+        ref_lat = current_user.latitude
+        ref_lng = current_user.longitude
+
+    results = []
+    for d in distributors:
+        out = UserOut.model_validate(d)
+        if ref_lat is not None and ref_lng is not None and d.latitude is not None and d.longitude is not None:
+            out.distance_km = calculate_distance_km(ref_lat, ref_lng, d.latitude, d.longitude)
+        else:
+            out.distance_km = None
+        results.append(out)
+
+    results.sort(key=lambda x: (x.distance_km is None, x.distance_km or 999999))
+    return results

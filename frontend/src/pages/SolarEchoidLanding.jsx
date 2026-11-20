@@ -29,18 +29,18 @@ export default function SolarEchoidLanding() {
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
 
-  // Resident rooftop location selection mode (Current vs Choose on Map)
-  const [residentLocationMode, setResidentLocationMode] = useState('current'); // 'current' | 'map'
-  const [residentLat, setResidentLat] = useState(12.9716);
-  const [residentLng, setResidentLng] = useState(77.5946);
-  const [residentCity, setResidentCity] = useState('Bengaluru');
+  // Location selection mode for registration (Distributor, Maintainer, Resident)
+  const [regLocationMode, setRegLocationMode] = useState('current'); // 'current' | 'map'
+  const [regLat, setRegLat] = useState(12.9716);
+  const [regLng, setRegLng] = useState(77.5946);
+  const [regCity, setRegCity] = useState('Bengaluru');
 
-  const autoDetectResidentLocation = () => {
+  const autoDetectRegLocation = () => {
     if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setResidentLat(parseFloat(pos.coords.latitude.toFixed(4)));
-          setResidentLng(parseFloat(pos.coords.longitude.toFixed(4)));
+          setRegLat(parseFloat(pos.coords.latitude.toFixed(4)));
+          setRegLng(parseFloat(pos.coords.longitude.toFixed(4)));
         },
         () => {},
         { timeout: 8000 }
@@ -49,8 +49,8 @@ export default function SolarEchoidLanding() {
   };
 
   useEffect(() => {
-    if (isRegister && selectedRole === 'installation_owner') {
-      autoDetectResidentLocation();
+    if (isRegister) {
+      autoDetectRegLocation();
     }
   }, [isRegister, selectedRole]);
 
@@ -80,20 +80,24 @@ export default function SolarEchoidLanding() {
           name: username,
           username: username,
           password: pwd,
-          role: selectedRole
+          role: selectedRole,
+          latitude: regLat,
+          longitude: regLng,
+          city: regCity,
+          address: `${regCity} ${selectedRole === 'distributor' ? 'Distribution Hub' : selectedRole === 'technician' ? 'Maintainer Base' : 'Solar Rooftop'}`
         });
 
-        // If registering as a new resident, register their rooftop solar installation with chosen location
+        // If registering as a new resident, auto-register rooftop solar installation with chosen location
         if (selectedRole === 'installation_owner') {
           try {
             await createInstallation({
               name: `${username}'s Rooftop Solar`,
-              address: `${residentCity} Rooftop System`,
-              city: residentCity,
+              address: `${regCity} Rooftop System`,
+              city: regCity,
               state: 'Karnataka',
               postal_code: '560001',
-              latitude: residentLat,
-              longitude: residentLng,
+              latitude: regLat,
+              longitude: regLng,
               capacity_kw: 15.0,
               installation_type: 'rooftop_residential',
               inverter_mfr: 'Sungrow',
@@ -253,8 +257,8 @@ export default function SolarEchoidLanding() {
                 />
               </div>
 
-              {/* While registering for a new resident: Ask current location or choose on map */}
-              {isRegister && selectedRole === 'installation_owner' && (
+              {/* While registering for ANY user: Distributor, Maintainer, or Resident */}
+              {isRegister && (
                 <div style={{
                   width: '100%',
                   display: 'flex',
@@ -275,22 +279,26 @@ export default function SolarEchoidLanding() {
                     textTransform: 'uppercase',
                     fontWeight: 700
                   }}>
-                    Rooftop Location: Is installation at your current location?
+                    {selectedRole === 'distributor'
+                      ? 'Distribution Center Location: Current location or choose on map?'
+                      : selectedRole === 'technician'
+                      ? 'Maintainer Service Base Location: Current location or choose on map?'
+                      : 'Rooftop Location: Current location or choose on map?'}
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                     <button
                       type="button"
                       onClick={() => {
-                        setResidentLocationMode('current');
-                        autoDetectResidentLocation();
+                        setRegLocationMode('current');
+                        autoDetectRegLocation();
                       }}
                       style={{
                         padding: '6px 8px',
-                        background: residentLocationMode === 'current' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        background: regLocationMode === 'current' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                         border: '1px solid',
-                        borderColor: residentLocationMode === 'current' ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
-                        color: residentLocationMode === 'current' ? '#10B981' : '#AAA',
+                        borderColor: regLocationMode === 'current' ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
+                        color: regLocationMode === 'current' ? '#10B981' : '#AAA',
                         fontSize: '0.7rem',
                         fontFamily: 'var(--font-mono)',
                         cursor: 'pointer',
@@ -301,13 +309,13 @@ export default function SolarEchoidLanding() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setResidentLocationMode('map')}
+                      onClick={() => setRegLocationMode('map')}
                       style={{
                         padding: '6px 8px',
-                        background: residentLocationMode === 'map' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        background: regLocationMode === 'map' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                         border: '1px solid',
-                        borderColor: residentLocationMode === 'map' ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
-                        color: residentLocationMode === 'map' ? '#10B981' : '#AAA',
+                        borderColor: regLocationMode === 'map' ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
+                        color: regLocationMode === 'map' ? '#10B981' : '#AAA',
                         fontSize: '0.7rem',
                         fontFamily: 'var(--font-mono)',
                         cursor: 'pointer',
@@ -318,16 +326,16 @@ export default function SolarEchoidLanding() {
                     </button>
                   </div>
 
-                  {residentLocationMode === 'map' ? (
+                  {regLocationMode === 'map' ? (
                     <div style={{ marginTop: '4px' }}>
                       <MapLocationPicker
-                        initialLat={residentLat}
-                        initialLng={residentLng}
+                        initialLat={regLat}
+                        initialLng={regLng}
                         height="200px"
                         onLocationSelect={(lat, lng, cityName) => {
-                          setResidentLat(lat);
-                          setResidentLng(lng);
-                          if (cityName) setResidentCity(cityName);
+                          setRegLat(lat);
+                          setRegLng(lng);
+                          if (cityName) setRegCity(cityName);
                         }}
                       />
                     </div>
@@ -342,7 +350,7 @@ export default function SolarEchoidLanding() {
                       textAlign: 'left',
                       borderRadius: '3px'
                     }}>
-                      📍 GPS: {residentLat}° N, {residentLng}° E ({residentCity})
+                      📍 Location: {regLat}° N, {regLng}° E ({regCity})
                     </div>
                   )}
                 </div>
