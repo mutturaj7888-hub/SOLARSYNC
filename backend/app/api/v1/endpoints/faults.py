@@ -1,7 +1,6 @@
 import os
 import uuid
 import shutil
-import math
 from typing import List, Optional
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status
@@ -16,14 +15,6 @@ from app.models.activity import ActivityLog
 from app.models.notification import Notification
 from app.schemas.fault import FaultCreate, FaultUpdate, FaultOut
 from app.api.deps import get_current_user, require_roles
-
-def calculate_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    R = 6371.0
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
-    a = math.sin(dlat / 2.0) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2.0) ** 2
-    c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
-    return round(R * c, 2)
 
 router = APIRouter()
 
@@ -60,14 +51,12 @@ def get_fault_reports(
 
     faults = query.order_by(FaultReport.created_at.desc()).offset(skip).limit(limit).all()
     
-    # Decorate with installation and distributor names
+    # Decorate with installation names
     results = []
     for f in faults:
         out = FaultOut.model_validate(f)
         if f.installation:
             out.installation_name = f.installation.name
-        if f.distributor:
-            out.distributor_name = f.distributor.full_name
         results.append(out)
     return results
 
@@ -105,24 +94,6 @@ def create_fault_report(
     # Generate unique ticket reference
     ticket_num = f"FLT-{uuid.uuid4().hex[:6].upper()}"
 
-    # Auto-assign to nearest distributor if not explicitly chosen
-    distrib_id = fault_in.distributor_id
-    if not distrib_id and inst.latitude is not None and inst.longitude is not None:
-        all_distributors = db.query(User).filter(
-            User.role.in_([UserRole.DISTRIBUTOR, UserRole.ADMIN]),
-            User.is_active == True
-        ).all()
-        nearest = None
-        min_dist = float('inf')
-        for d in all_distributors:
-            if d.latitude is not None and d.longitude is not None:
-                dist = calculate_distance_km(inst.latitude, inst.longitude, d.latitude, d.longitude)
-                if dist < min_dist:
-                    min_dist = dist
-                    nearest = d
-        if nearest:
-            distrib_id = nearest.id
-
     fault = FaultReport(
         ticket_number=ticket_num,
         title=fault_in.title,
@@ -132,8 +103,7 @@ def create_fault_report(
         status=FaultStatus.REPORTED,
         photo_url=fault_in.photo_url,
         installation_id=fault_in.installation_id,
-        reported_by_id=current_user.id,
-        distributor_id=distrib_id
+        reported_by_id=current_user.id
     )
     db.add(fault)
     
@@ -158,8 +128,6 @@ def create_fault_report(
 
     out = FaultOut.model_validate(fault)
     out.installation_name = inst.name
-    if fault.distributor:
-        out.distributor_name = fault.distributor.full_name
     return out
 
 

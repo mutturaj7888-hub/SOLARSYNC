@@ -120,29 +120,35 @@ def assign_technician(
     db.add(log)
     db.commit()
 
-    # Trigger async notification in daemon thread so offline Redis never blocks response
+    tech_id = tech.id
+    tech_name = tech.full_name
+    ticket_num = fault.ticket_number
+    fault_status_val = fault.status.value if hasattr(fault.status, 'value') else str(fault.status)
+
+    out = AssignmentOut.model_validate(db_assign)
+    out.technician_name = tech_name
+    out.ticket_number = ticket_num
+    out.fault_status = fault_status_val
+
+    # Trigger async notification in daemon thread without touching ORM session objects
     try:
         import threading
-        def _async_notify():
+        def _async_notify(u_id, t_num):
             try:
                 send_maintenance_notification.apply_async(
                     kwargs={
-                        "user_id": tech.id,
-                        "message": f"Work order dispatched: {fault.ticket_number}",
+                        "user_id": u_id,
+                        "message": f"Work order dispatched: {t_num}",
                         "event_type": "DISPATCH"
                     },
                     connect_timeout=0.5
                 )
             except Exception:
                 pass
-        threading.Thread(target=_async_notify, daemon=True).start()
+        threading.Thread(target=_async_notify, args=(tech_id, ticket_num), daemon=True).start()
     except Exception:
         pass
 
-    out = AssignmentOut.model_validate(db_assign)
-    out.technician_name = tech.full_name
-    out.ticket_number = fault.ticket_number
-    out.fault_status = fault.status.value if hasattr(fault.status, 'value') else str(fault.status)
     return out
 
 

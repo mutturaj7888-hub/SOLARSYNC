@@ -99,28 +99,9 @@ export default function MaintenanceView({
     }
   };
 
-  const updateSortedTechnicians = async (faultId) => {
-    if (!faultId) return;
-    try {
-      const techData = await getTechnicians({ fault_id: parseInt(faultId) }).catch(() => []);
-      if (techData && techData.length > 0) {
-        setTechnicians(techData);
-        setSelectedTechId(techData[0].id);
-      }
-    } catch (e) {
-      console.warn("Failed to load sorted technicians:", e);
-    }
-  };
-
   useEffect(() => {
     loadData();
   }, []);
-
-  useEffect(() => {
-    if (selectedFaultId && showAssignModal) {
-      updateSortedTechnicians(selectedFaultId);
-    }
-  }, [selectedFaultId, showAssignModal]);
 
   // Handle preselected verification modal request from other tabs
   useEffect(() => {
@@ -630,10 +611,7 @@ export default function MaintenanceView({
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Select Problem Request</label>
                 <select
                   value={selectedFaultId}
-                  onChange={(e) => {
-                    setSelectedFaultId(e.target.value);
-                    updateSortedTechnicians(e.target.value);
-                  }}
+                  onChange={(e) => setSelectedFaultId(e.target.value)}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                 >
                   {faults.map((f) => (
@@ -645,17 +623,15 @@ export default function MaintenanceView({
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
-                  Available Field Maintainer (Sorted by Nearest to Resident)
-                </label>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>Available Field Maintainer</label>
                 <select
                   value={selectedTechId}
                   onChange={(e) => setSelectedTechId(e.target.value)}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: '#1F2937', border: '1px solid var(--border-subtle)', color: '#FFF' }}
                 >
-                  {technicians.map((t, idx) => (
+                  {technicians.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.full_name} ({t.city || 'Local Base'}) {t.distance_km != null ? `• ${t.distance_km} km away ${idx === 0 ? '(Nearest Maintainer ★)' : ''}` : ''}
+                      {t.full_name} ({t.phone_number || t.email})
                     </option>
                   ))}
                 </select>

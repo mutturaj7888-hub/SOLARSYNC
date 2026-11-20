@@ -9,10 +9,6 @@ class UserBase(BaseModel):
     full_name: str
     phone_number: Optional[str] = None
     role: UserRole = UserRole.INSTALLATION_OWNER
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    city: Optional[str] = None
-    address: Optional[str] = None
 
 
 class UserCreate(BaseModel):
@@ -24,10 +20,6 @@ class UserCreate(BaseModel):
     password: str
     phone_number: Optional[str] = None
     role: Optional[UserRole] = UserRole.INSTALLATION_OWNER
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    city: Optional[str] = None
-    address: Optional[str] = None
 
 
 class UserLogin(BaseModel):
@@ -48,11 +40,6 @@ class UserOut(BaseModel):
     is_active: bool
     is_verified: bool
     created_at: datetime
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    city: Optional[str] = None
-    address: Optional[str] = None
-    distance_km: Optional[float] = None
 
     model_config = ConfigDict(from_attributes=True)
 

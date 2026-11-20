@@ -56,12 +56,12 @@ export const checkSystemHealth = async () => {
 
 // Auth Services
 export const loginUser = async (identifier, password) => {
-  const response = await apiClient.post('/auth/login', {
+  const response = await apiClient.post('/auth/login', { 
     username_or_email: identifier,
     name: identifier,
     username: identifier,
     email: identifier,
-    password
+    password 
   });
   if (response.data.access_token) {
     localStorage.setItem('solarsync_token', response.data.access_token);
@@ -78,11 +78,7 @@ export const registerUser = async (userData) => {
     email: userData.email || '',
     password: userData.password,
     role: userData.role || 'installation_owner',
-    phone_number: userData.phone_number || '',
-    latitude: userData.latitude,
-    longitude: userData.longitude,
-    city: userData.city,
-    address: userData.address
+    phone_number: userData.phone_number || ''
   });
   if (response.data.access_token) {
     localStorage.setItem('solarsync_token', response.data.access_token);
@@ -95,13 +91,8 @@ export const getCurrentUser = async () => {
   return response.data;
 };
 
-export const getTechnicians = async (params = {}) => {
-  const response = await apiClient.get('/auth/technicians', { params });
-  return response.data;
-};
-
-export const getDistributors = async (params = {}) => {
-  const response = await apiClient.get('/auth/distributors', { params });
+export const getTechnicians = async () => {
+  const response = await apiClient.get('/auth/technicians');
   return response.data;
 };
 

@@ -14,7 +14,6 @@ class FaultBase(BaseModel):
 
 class FaultCreate(FaultBase):
     installation_id: int
-    distributor_id: Optional[int] = None
 
 
 class FaultUpdate(BaseModel):
@@ -24,7 +23,6 @@ class FaultUpdate(BaseModel):
     severity: Optional[FaultSeverity] = None
     status: Optional[FaultStatus] = None
     photo_url: Optional[str] = None
-    distributor_id: Optional[int] = None
 
 
 class FaultOut(FaultBase):
@@ -33,8 +31,6 @@ class FaultOut(FaultBase):
     status: FaultStatus
     installation_id: int
     reported_by_id: int
-    distributor_id: Optional[int] = None
-    distributor_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     resolved_at: Optional[datetime] = None
