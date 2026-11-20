@@ -35,7 +35,8 @@ class User(Base):
 
     # Relationships
     installations = relationship("SolarInstallation", back_populates="owner", cascade="all, delete-orphan")
-    fault_reports = relationship("FaultReport", back_populates="reported_by")
+    fault_reports = relationship("FaultReport", foreign_keys="[FaultReport.reported_by_id]", back_populates="reported_by")
+    assigned_faults = relationship("FaultReport", foreign_keys="[FaultReport.distributor_id]", back_populates="distributor")
     assigned_jobs = relationship("MaintenanceAssignment", back_populates="technician")
     verified_repairs = relationship("RepairEvidence", back_populates="verified_by_user")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")

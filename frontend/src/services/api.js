@@ -56,12 +56,12 @@ export const checkSystemHealth = async () => {
 
 // Auth Services
 export const loginUser = async (identifier, password) => {
-  const response = await apiClient.post('/auth/login', { 
+  const response = await apiClient.post('/auth/login', {
     username_or_email: identifier,
     name: identifier,
     username: identifier,
     email: identifier,
-    password 
+    password
   });
   if (response.data.access_token) {
     localStorage.setItem('solarsync_token', response.data.access_token);

@@ -58,7 +58,7 @@ class FaultReport(Base):
     # Relationships
     installation = relationship("SolarInstallation", back_populates="fault_reports")
     reported_by = relationship("User", foreign_keys=[reported_by_id], back_populates="fault_reports")
-    distributor = relationship("User", foreign_keys=[distributor_id])
+    distributor = relationship("User", foreign_keys=[distributor_id], back_populates="assigned_faults")
     assignment = relationship("MaintenanceAssignment", back_populates="fault_report", uselist=False, cascade="all, delete-orphan")
     evidence = relationship("RepairEvidence", back_populates="fault_report", cascade="all, delete-orphan")
 
